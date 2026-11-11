@@ -169,7 +169,7 @@ function qrBox(text, title, hint) {
 async function qrReceive() {
   const s = Sync.newSession();
   const box = qrBox(Sync.qrPayload('send', s), 'Scanne avec le launcher',
-    'Dans le launcher : Paramètres → Sauvegarde → « Synchroniser avec le PC », puis scanne ce code. Ta partie arrive chiffrée.');
+    'Dans le launcher : Paramètres → Version web → « Scanner le QR code du PC », puis scanne ce code. Ta partie arrive chiffrée.');
   try {
     const json = await Sync.waitDownload(s, box.isCancelled);
     if (!json) { box.state('Délai dépassé. Réessaie.'); return; }
@@ -183,7 +183,7 @@ async function qrSend() {
   try {
     await Sync.upload(s, S.exportJson());
     const box = qrBox(Sync.qrPayload('get', s), 'Scanne avec le launcher pour récupérer ta partie',
-      'Dans le launcher : Paramètres → Sauvegarde → « Synchroniser avec le PC ». Ta progression du PC remplace celle du téléphone.');
+      'Dans le launcher : Paramètres → Version web → « Scanner le QR code du PC ». Ta progression du PC remplace celle du téléphone.');
     const ok = await Sync.waitPickedUp(s, box.isCancelled);
     if (ok) { box.state('✓ PARTIE REÇUE PAR LE TÉLÉPHONE'); toast('Partie envoyée au téléphone'); } else box.state('Délai dépassé.');
   } catch (e) {
