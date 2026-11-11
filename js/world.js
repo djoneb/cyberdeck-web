@@ -130,6 +130,9 @@ export function choose(placeId, e, idx) {
   if (e.kind === 'runner' && idx < 2 && e.expedition) { const err = startExpedition(e.expedition, e.who); if (err) return { error: err }; started = true; }
   S.setL(B8, 'city_last_' + placeId, Date.now()); S.setI(B8, 'visits', visits() + 1); S.setI(B8, 'met_' + placeId, S.get(B8, 'met_' + placeId, 0) + 1);
   delete pending[placeId];
+  if (new Date().getHours() === 3) S.setB(B8, 'h3visit', true);
+  if (e.kind === 'stranger' && e.who === 'Un chat cybernétique' && idx === 0) S.setB(B8, 'metcat', true);
+  if (started && idx === 1) { const a = active()[0]; if (a) S.setB(B8, `neg_${a.exp.id}@${a.end}`, true); }
   if (visits() >= 20) S.unlock('city_20');
   const sp = spot(placeId);
   let mult = 100;
@@ -186,7 +189,7 @@ export function expEventState(a, now = Date.now()) {
 }
 export function resolveExpEvent(a, risky) {
   const m = !risky ? 110 : (Math.random() < 0.5 ? 160 : 70);
-  S.setI(B9, 'ee_' + evKey(a), m); S.persist();
+  S.setI(B9, 'ee_' + evKey(a), m); if (m === 70) S.setI(B9, 'rfail', S.get(B9, 'rfail', 0) + 1); S.persist();
   return m >= 160 ? 'Coup de maître ! Récompense +60 %' : m >= 110 ? 'Prudence payante : récompense +10 %' : 'Raté… récompense −30 %';
 }
 export const chainProgress = (cid) => S.get(B9, 'chain_' + cid, 0);
@@ -202,6 +205,10 @@ export function claimExpedition(a) {
   saveActive(active().filter(x => x.exp.id !== a.exp.id));
   S.setI(B8, 'completed', S.get(B8, 'completed', 0) + 1);
   const mult = S.get(B9, 'ee_' + evKey(a), 100);
+  // compteurs des cartes de contrat
+  S.setI(B8, 'xc_' + a.exp.id, S.get(B8, 'xc_' + a.exp.id, 0) + 1);
+  if (mult === 160) S.setB(B8, 'xr_' + a.exp.id, true);
+  const nk = `neg_${a.exp.id}@${a.end}`; if (S.get(B8, nk, false)) { S.setI(B8, 'xn_' + a.exp.id, S.get(B8, 'xn_' + a.exp.id, 0) + 1); delete S.raw(B8)[nk]; }
   const xp = Math.floor(expXp(a.exp) * mult / 100); S.addXp(xp);
   let cash = Math.floor(expEddies(a.exp) * mult / 100); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2); S.addEddies(cash);
   addRep(DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length].id, 2);

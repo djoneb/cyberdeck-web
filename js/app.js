@@ -10,6 +10,7 @@ import * as So from './social.js';
 import { cyberware, market, PALETTES, WEB_THEME_KEY } from './market.js';
 import { quetes, succes } from './questsui.js';
 import * as Q from './quests.js';
+import { cartes, checkCards, cardCount, cardTotal } from './cardsui.js';
 import * as Sync from './sync.js';
 
 const view = document.getElementById('view');
@@ -17,10 +18,10 @@ const nav = document.getElementById('nav');
 const fileInput = document.getElementById('file');
 let stop = null, leaves = [];
 
-const TABS = [['profil', 'PROFIL'], ['holophone', 'HOLOPHONE'], ['jeux', 'JEUX'], ['quetes', 'QUÊTES'], ['ville', 'LA VILLE'], ['cyber', 'CYBERWARE'], ['marche', 'MARCHÉ'], ['succes', 'SUCCÈS'], ['neura', 'NEURA'], ['sauvegarde', 'SAUVEGARDE']];
+const TABS = [['profil', 'PROFIL'], ['holophone', 'HOLOPHONE'], ['jeux', 'JEUX'], ['quetes', 'QUÊTES'], ['ville', 'LA VILLE'], ['cyber', 'CYBERWARE'], ['marche', 'MARCHÉ'], ['cartes', 'CARTES'], ['succes', 'SUCCÈS'], ['neura', 'NEURA'], ['sauvegarde', 'SAUVEGARDE']];
 const ctx = {
   toast, onLeave: (f) => leaves.push(f), level: () => level(S.xp()),
-  changed: () => { if (S.hasSave()) document.getElementById('savestate').textContent = `NIV ${level(S.xp())} · ${S.xp()} XP · €$ ${S.eddies()}`; },
+  changed: () => { if (!S.hasSave()) return; document.getElementById('savestate').textContent = `NIV ${level(S.xp())} · ${S.xp()} XP · €$ ${S.eddies()}`; clearTimeout(ctx.ct); ctx.ct = setTimeout(() => { if (!document.querySelector('.overlay')) checkCards(ctx); }, 600); },
   popup, go: (t, a) => go(t, a), applyTheme: () => applyTheme(),
 };
 function popup(title, text) {
@@ -44,7 +45,7 @@ function go(tab, arg) {
   nav.innerHTML = S.hasSave() ? TABS.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-k="${k}">${l}</button>`).join('') : '';
   nav.querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.k));
   document.getElementById('savestate').textContent = 'AUCUNE PARTIE'; ctx.changed();
-  const pages = { accueil, profil, neura, jeux, holophone: () => holoPage(view, ctx, arg), ville: () => city(view, ctx, arg || 'map'), cyber: () => cyberware(view, ctx), marche: () => market(view, ctx), quetes: () => quetes(view, ctx), succes: () => succes(view), sauvegarde };
+  const pages = { accueil, profil, neura, jeux, holophone: () => holoPage(view, ctx, arg), ville: () => city(view, ctx, arg || 'map'), cyber: () => cyberware(view, ctx), marche: () => market(view, ctx), quetes: () => quetes(view, ctx), succes: () => succes(view), cartes: () => cartes(view, ctx), sauvegarde };
   (pages[tab] || profil)();
   window.scrollTo(0, 0);
   location.hash = tab;
@@ -90,6 +91,7 @@ function profil() {
     ${door('holophone', '☎', 'HOLOPHONE', 'contacts · messages · ♥', 'var(--info)', holoBadge())}
     ${door('jeux', '⌗', 'JEUX', 'breach · circuits · infiltration', 'var(--primary)')}
     ${door('quetes', '☰', 'QUÊTES', 'défis · récit · cartes holo', 'var(--amber)', Q.challenges().filter(c => Q.challengeDone(c) && !Q.claimed(c.id)).length)}
+    ${door('cartes', '◫', 'CARTES HOLO', `${cardCount()}/${cardTotal()} · collection`, '#ff4fd8')}
     ${door('succes', '✦', 'SUCCÈS', `${S.achievements().length} débloqués · secrets`, 'var(--primary)')}
     ${door('neura', '◈', 'NEURA', 'stade ' + stageOwned() + ' · ' + NEURA_STAGES[stageOwned() - 1], '#6ff3ff')}
     ${door('cyber', '⬡', 'CYBERWARE', `implants ${So.equipped().length}/${So.slots()} · marché`, '#b98cff')}

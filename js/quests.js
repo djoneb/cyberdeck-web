@@ -43,7 +43,7 @@ export const cityEventDone = () => S.get(B6, 'ev_' + today(), false);
 /** Action de jeu : termine l'événement de ville s'il correspond. */
 export function cityEventCheck(ev) {
   const ce = cityEvent(); if (!ce || ce.event !== ev || cityEventDone()) return null;
-  S.setB(B6, 'ev_' + today(), true); S.addXp(ce.xp); S.addEddies(Math.floor(ce.xp / 2)); S.persist();
+  S.setB(B6, 'ev_' + today(), true); S.setB(B6, 'ce_' + ce.id, true); S.addXp(ce.xp); S.addEddies(Math.floor(ce.xp / 2)); S.persist();
   return `${ce.name} : mission réussie (+${ce.xp} XP)`;
 }
 

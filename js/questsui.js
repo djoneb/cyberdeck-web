@@ -35,11 +35,9 @@ export function quetes(view, ctx) {
       return `<details class="chapter ${open ? 'open' : ''}" ${c.id === st ? 'open' : ''}><summary><span class="mono small">CHAPITRE ${c.id}</span><b>${open ? esc(c.title) : '████████'}</b>
         <span class="mono tiny" style="color:${c.id < st ? 'var(--green)' : open ? 'var(--amber)' : 'var(--dim)'}">${c.id < st ? '✓ ACCOMPLI' : open ? '› ' + esc(c.goal) : '🔒 ' + esc(c.goal)}</span></summary>
         ${open ? `<p>${esc(c.text)}</p>` : '<p class="dim">Chapitre chiffré. Termine le chapitre précédent pour le déverrouiller.</p>'}</details>`; }).join('')}</div>
-    <div class="label">CARTES HOLO · ${owned}/${Q.cards().length}</div>
-    <p class="dim small">Une carte bronze à 30 d'affinité, argent à 60, or à 90.</p>
-    <div class="cards">${Q.cards().map(k => `<div class="hcard t${k.tier} ${Q.cardOwned(k.id) ? 'own' : ''}" data-c="${k.c.id}"><span class="pf"></span><b>${Q.cardOwned(k.id) ? esc(k.c.name) : '???'}</b>
-      <span class="mono tiny">${Q.TIER_NAMES[k.tier - 1]}</span>${Q.cardOwned(k.id) ? `<em>« ${esc(Q.quote(k.c, k.tier))} »</em>` : `<em class="dim">affinité ${Q.TIERS[k.tier - 1]}</em>`}</div>`).join('')}</div>`;
-    view.querySelectorAll('.hcard').forEach(h => h.querySelector('.pf').appendChild(portraitCanvas(Wd.contact(h.dataset.c), 64, h.classList.contains('t3') && h.classList.contains('own'))));
+    <div class="label">CARTES HOLO</div>
+    <div class="qcard" style="--c:#ff4fd8"><h3>COLLECTION</h3><p>Portraits, amitié, réputation, contrats et cartes secrètes : toutes se méritent et restent cachées jusqu'à leur obtention.</p>
+      <button class="btn main" data-go="cartes">Ouvrir la collection ›</button></div>`;
     view.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => { const m = Q.claim(Q.challenges().find(c => c.id === b.dataset.claim)); if (m) ctx.toast(m); ctx.changed(); paint(); });
     view.querySelectorAll('[data-go]').forEach(b => b.onclick = () => ctx.go(b.dataset.go, b.dataset.arg));
   };

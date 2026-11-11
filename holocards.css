@@ -1,0 +1,90 @@
+/* Collection de cartes holo — partagée entre le site et le launcher (même fichier). */
+.hc { --hc-panel: #0a1219; --hc-line: rgba(255, 255, 255, .10); --hc-tx: #e8f4f8; --hc-dim: #7f9aa2;
+  --hc-display: "Rajdhani", "Arial Narrow", sans-serif; --hc-mono: "Share Tech Mono", ui-monospace, monospace; color: var(--hc-tx); font-family: var(--hc-display); }
+.hc * { box-sizing: border-box; }
+.hc-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+.hc-eyebrow { font: 13px var(--hc-mono); letter-spacing: .25em; color: var(--hc-dim); }
+.hc-h1 { font-size: clamp(40px, 6vw, 62px); margin: 4px 0; letter-spacing: .04em; line-height: 1; text-shadow: -2px 0 rgba(255, 59, 78, .55), 2px 0 rgba(0, 216, 240, .55); }
+.hc-progress { min-width: 220px; display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 2px 8px; }
+.hc-progress b { font-size: 40px; color: #00d8f0; } .hc-progress span { color: var(--hc-dim); font: 14px var(--hc-mono); }
+.hc-progress i { grid-column: 1 / -1; height: 6px; background: rgba(255, 255, 255, .08); } .hc-progress u { display: block; height: 100%; background: linear-gradient(90deg, #00d8f0, #ff4fd8); }
+.hc-lead { color: var(--hc-dim); max-width: 80ch; margin: 10px 0 18px; font-size: 17px; }
+.hc-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.hc-lg { border: 1px solid color-mix(in srgb, var(--k) 45%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--k) 12%, transparent), transparent 70%); padding: 12px 14px; min-width: 0;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); }
+.hc-lg b { color: var(--k); font: 15px var(--hc-mono); letter-spacing: .16em; display: flex; justify-content: space-between; }
+.hc-lg p { margin: 6px 0 0; font-size: 15px; line-height: 1.35; }
+.hc-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 20px; }
+.hc-filters button, .hc-btn { font: 600 15px var(--hc-display); letter-spacing: .08em; color: var(--hc-tx); background: transparent; border: 1px solid var(--hc-line); padding: 8px 14px; cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+.hc-filters button[aria-pressed="true"], .hc-btn { background: var(--k, #00d8f0); color: #04080c; border-color: transparent; }
+.hc-filters button:focus-visible, .hc-card:focus-visible, .hc-btn:focus-visible { outline: 2px solid #00d8f0; outline-offset: 3px; }
+.hc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 22px; }
+.hc-section { grid-column: 1 / -1; font: 14px var(--hc-mono); letter-spacing: .25em; color: var(--hc-dim); display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+.hc-section::after { content: ""; flex: 1; height: 1px; background: var(--hc-line); }
+/* ── Carte */
+.hc-card { perspective: 1200px; aspect-ratio: 5 / 7.4; width: 100%; max-width: 100%; cursor: pointer; border: 0; padding: 0; background: none; color: inherit; font: inherit; text-align: left; display: block; }
+.hc-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.2, .8, .2, 1); transform-style: preserve-3d; }
+.hc-card.hc-flip .hc-inner { transform: rotateY(180deg); }
+.hc-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; overflow: hidden; background: var(--hc-panel);
+  border: 1.5px solid color-mix(in srgb, var(--k) 70%, transparent); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+  box-shadow: inset 0 0 40px color-mix(in srgb, var(--k) 14%, transparent); }
+.hc-face::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(transparent 0 2px, rgba(0, 0, 0, .16) 2px 3px); }
+.hc-foil { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity .3s; z-index: 2;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), color-mix(in srgb, var(--k) 45%, transparent), transparent 45%), linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .10) 45%, transparent 60%); }
+.hc-card:hover .hc-foil, .hc-card:focus-visible .hc-foil { opacity: 1; }
+.hc-anim .hc-foil { opacity: .5; background: conic-gradient(from var(--hca, 0deg) at 50% 40%, var(--k), #6ff3f0, #ffd27a, #b98cff, var(--k)); mix-blend-mode: overlay; animation: hc-spin 8s linear infinite; }
+.hc-secretc .hc-foil { background: conic-gradient(from var(--hca, 0deg) at 50% 40%, #fff, #6ff3f0, #ff4fd8, #fff); }
+@property --hca { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes hc-spin { to { --hca: 360deg; } }
+.hc-fresh .hc-face { box-shadow: inset 0 0 40px color-mix(in srgb, var(--k) 14%, transparent), 0 0 0 2px var(--k); }
+.hc-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; padding: 10px 14px 6px; font: 11px var(--hc-mono); letter-spacing: .12em; color: var(--hc-dim); white-space: nowrap; }
+.hc-rar { color: var(--k); }
+.hc-art { position: relative; margin: 0 12px; height: 44%; flex: none; border: 1px solid color-mix(in srgb, var(--k) 35%, transparent);
+  background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--k) 22%, transparent), transparent 70%), linear-gradient(#0b1720, #05090d); overflow: hidden; }
+.hc-sky { position: absolute; inset: auto 0 0 0; width: 100%; height: 46%; opacity: .5; }
+.hc-g { position: absolute; left: 50%; top: 46%; width: 58%; height: 70%; transform: translate(-50%, -50%); color: var(--k); filter: drop-shadow(0 0 6px var(--k)); }
+.hc-big { position: absolute; left: 50%; top: 54%; height: 96%; aspect-ratio: 1; transform: translate(-50%, -50%); }
+.hc-fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hc-medal { position: absolute; left: 8px; top: 8px; width: 30px; height: 30px; box-shadow: 0 0 0 1px var(--k); }
+.hc-place { position: absolute; left: 8px; bottom: 6px; font: 10px var(--hc-mono); letter-spacing: .12em; color: var(--hc-tx); background: rgba(4, 8, 12, .8); padding: 2px 6px; max-width: calc(100% - 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-min { position: absolute; right: 8px; top: 6px; font: 11px var(--hc-mono); color: var(--k); white-space: nowrap; }
+.hc-cat { display: inline-block; font: 10px var(--hc-mono); letter-spacing: .16em; border: 1px solid var(--hc-line); padding: 1px 6px; margin: 8px 14px 0; align-self: flex-start; }
+.hc-title { padding: 6px 14px 0; font-size: 21px; font-weight: 700; line-height: 1.05; letter-spacing: .02em; text-wrap: balance; }
+.hc-who { display: flex; align-items: center; gap: 10px; padding: 8px 14px 0; min-width: 0; }
+.hc-who canvas { width: 34px; height: 34px; flex: none; }
+.hc-who div { min-width: 0; } .hc-who b { display: block; font-size: 15px; color: #e8505b; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-who span { display: block; font: 11px var(--hc-mono); color: var(--hc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-quote { margin: 8px 14px 0; font-size: 14.5px; line-height: 1.3; color: #cfeff4; font-style: italic; border-left: 2px solid var(--k); padding-left: 8px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hc-dimq { border-color: var(--hc-dim); color: var(--hc-dim); }
+.hc-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding: 8px 14px 12px; font: 11px var(--hc-mono); color: var(--hc-dim); }
+.hc-serial { color: var(--k); letter-spacing: .12em; }
+.hc-back { transform: rotateY(180deg); padding: 16px; gap: 10px; }
+.hc-back h3 { margin: 0; font: 13px var(--hc-mono); letter-spacing: .18em; color: var(--k); }
+.hc-t { font-size: 22px; font-weight: 700; line-height: 1.05; }
+.hc-back p { margin: 0; font-size: 15px; line-height: 1.35; }
+.hc-cond { border: 1px dashed color-mix(in srgb, var(--k) 60%, transparent); padding: 10px; background: color-mix(in srgb, var(--k) 8%, transparent); font-size: 15px; }
+.hc-cond b { display: block; font: 12px var(--hc-mono); letter-spacing: .18em; color: var(--k); margin-bottom: 4px; }
+.hc-reward { font: 12px var(--hc-mono); color: var(--hc-dim); }
+.hc-eps { margin: 0; padding-left: 18px; font-size: 15px; }
+.hc-flipnote { margin-top: auto; font: 11px var(--hc-mono); color: var(--hc-dim); }
+/* carte verrouillée */
+.hc-locked .hc-face { border-style: dashed; background: repeating-linear-gradient(135deg, #070d12 0 10px, #0a1219 10px 20px); }
+.hc-qmbox { display: grid; place-items: center; }
+.hc-qm { font: 700 120px var(--hc-display); color: #f4fbff; opacity: .85; text-shadow: -3px 0 rgba(255, 59, 78, .6), 3px 0 rgba(0, 216, 240, .6); line-height: 1; }
+.hc-locked .hc-title { color: var(--hc-dim); }
+/* révélation d'une nouvelle carte */
+.hc-reveal { position: fixed; inset: 0; z-index: 90; background: rgba(2, 5, 7, .92); display: grid; place-items: center; padding: 16px; overflow: auto; }
+.hc-rv { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.hc-rvcard { width: min(320px, 80vw); animation: hc-pop .7s cubic-bezier(.2, .9, .2, 1.2); }
+.hc-rvtxt { font: 15px var(--hc-mono); color: #7cf29a; letter-spacing: .1em; }
+@keyframes hc-pop { from { transform: scale(.4) rotateY(180deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hc-inner { transition: none; } .hc-anim .hc-foil { animation: none; } .hc-rvcard { animation: none; } }
+@media (max-width: 520px) {
+  .hc-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hc-top { font-size: 8.5px; letter-spacing: .04em; padding: 8px 10px 4px; } .hc-min { font-size: 9px; }
+  .hc-title { font-size: 16px; } .hc-quote { -webkit-line-clamp: 2; font-size: 13px; } .hc-who canvas { width: 26px; height: 26px; }
+  .hc-back { padding: 10px; gap: 6px; } .hc-back p, .hc-eps, .hc-cond { font-size: 12.5px; } .hc-t { font-size: 17px; } .hc-qm { font-size: 80px; }
+}
+@media (max-width: 340px) { .hc-grid { grid-template-columns: 1fr; } }
