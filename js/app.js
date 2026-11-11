@@ -11,6 +11,7 @@ import { cyberware, market, PALETTES, WEB_THEME_KEY } from './market.js';
 import { quetes, succes } from './questsui.js';
 import * as Q from './quests.js';
 import { cartes, checkCards, cardCount, cardTotal } from './cardsui.js';
+import { openShare } from './sharecard.js';
 import * as Sync from './sync.js';
 
 const view = document.getElementById('view');
@@ -77,13 +78,14 @@ function profil() {
     <div class="ring">
       <svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="76" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8"/>
       <circle cx="85" cy="85" r="76" fill="none" stroke="#00d8f0" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C * f} ${C}" transform="rotate(-90 85 85)"/></svg>
-      <img src="${avatarFile(S.avatar())}" alt="Avatar"><span class="pct">${Math.round(f * 100)} %</span><span class="lvl">NIV ${lv}</span>
+      <img src="${S.avatarPhoto() || avatarFile(S.avatar())}" alt="Avatar"><span class="pct">${Math.round(f * 100)} %</span><span class="lvl">NIV ${lv}</span>
     </div>
     <div><h1 class="glitch">${esc(S.name().toUpperCase())}</h1>
       <div style="color:var(--cy);font-weight:700;letter-spacing:.2em">${esc(r[1].toUpperCase())}</div>
       <div class="mono dim" style="font-size:13px">${xp} XP${nx ? ` · ${nx[0] - xp} avant « ${esc(nx[1])} »` : ' · rang maximum'}</div>
       <div class="chips"><span class="chip" style="color:var(--amber)">€$ ${S.eddies()}</span><span class="chip" style="color:var(--cy)">✦ ${S.achievements().length} succès</span>
       ${S.streak() ? `<span class="chip" style="color:#ff7a2e">🔥 ${S.streak()} j</span>` : ''}</div></div>
+    <button class="btn sharebtn" id="share" title="Créer une image de ta carte de netrunner">⇪ PARTAGER MA CARTE</button>
   </div>
   ${neuraStrip()}
   <div class="label">NETRUNNER</div>
@@ -101,6 +103,7 @@ function profil() {
   </div>
   <p class="notice" style="margin-top:22px">Les gigs liés au téléphone (applis, radar, focus) restent à faire sur le launcher.</p>`;
   view.querySelectorAll('[data-go]').forEach(d => d.onclick = () => go(d.dataset.go));
+  view.querySelector('#share').onclick = () => openShare(toast);
   const strip = view.querySelector('.nstrip');
   if (strip) { stop = drawNeura(strip.querySelector('canvas'), stageOwned(), false); strip.onclick = () => go(strip.dataset.to, strip.dataset.arg || undefined); }
 }

@@ -52,6 +52,8 @@ export function addEddies(n) { setI('cyberdeck_b5', 'eddies', Math.max(0, eddies
 export const achievements = () => get('cyberdeck', 'achievements', []);
 export function unlock(id) { const a = achievements(); if (!a.includes(id)) { setSet('cyberdeck', 'achievements', [...a, id]); persist(); return true; } return false; }
 export const avatar = () => get('cyberdeck', 'avatar', 'a0');
+/** Photo de profil importée sur le téléphone (data URL), ou null. */
+export const avatarPhoto = () => (avatar() === 'photo' && save?.avatarPhoto) ? 'data:image/jpeg;base64,' + save.avatarPhoto : null;
 export const streak = () => get('cyberdeck_b9', 'streak', 0);
 export const affinity = (id) => get('cyberdeck_holophone', 'aff_' + id, 0);
 export const owned = (item) => get('cyberdeck_b5', 'own_' + item, false);
