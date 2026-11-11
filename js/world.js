@@ -2,6 +2,7 @@
 import * as S from './save.js';
 import { R, hashCode, today, epochDay } from './krand.js';
 import { chromeActive, itemActive } from './social.js';
+import * as Q from './quests.js';
 import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED } from './gamedata.js';
 
 export { CONTACTS, PLACES, DISTRICTS, SPOTS, CHAINS, CHAIN_NEED };
@@ -51,6 +52,7 @@ export function claimGig(c, g) {
   setGigState(c.id, 'claimed'); addAffinity(c.id, plus);
   S.addXp(xp); const cash = Math.floor(Math.floor(vip ? g.xp / 2 : g.xp / 3) * (chromeActive('wallet') ? 1.25 : 1)); S.addEddies(cash);
   if (vip && c.id === 'lou') addAffinity(c.id, 4);
+  Q.challenge('gig');
   return `+${xp} XP · +${cash} €$ · affinité +${plus}`;
 }
 

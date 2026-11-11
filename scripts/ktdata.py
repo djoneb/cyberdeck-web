@@ -13,8 +13,24 @@ class P:
         return a
     def atom(s):
         s.ws(); t=s.t; c=t[s.i]
+        def lit(i0):
+            j=i0+1; out=''
+            while t[j]!='"':
+                if t[j]=='\\': out+={'n':'\n','"':'"','\\':'\\','t':'\t'}.get(t[j+1],t[j+1]); j+=2
+                else: out+=t[j]; j+=1
+            return out, j+1
         if c=='"':
-            j=t.index('"',s.i+1); v=t[s.i+1:j]; s.i=j+1; return v
+            v,s.i=lit(s.i)
+            # concaténation "a" + "b"
+            while True:
+                k=s.i
+                while k<len(t) and t[k] in ' \t\r\n': k+=1
+                if t.startswith('+',k):
+                    s.i=k+1; s.ws()
+                    if t[s.i]=='"': w,s.i=lit(s.i); v+=w; continue
+                    s.i=k
+                break
+            return v
         m=re.match(r'0x[0-9A-Fa-f]+L?',t[s.i:])
         if m: s.i+=len(m.group()); h=m.group().rstrip('L'); return '#'+h[-6:].lower()
         m=re.match(r'-?\d+(\.\d+)?f?',t[s.i:])
@@ -69,7 +85,12 @@ dlines=grab('Batch6.kt','private val DATE_LINES = ')
 gifts=[obj(d,['id','name','desc']) for d in grab('Batch6.kt','val GIFTS = ')]
 items=[obj(d,['id','name','desc','price','consumable','kind']) for d in grab('Batch5.kt','object Eddies {\n    val ITEMS = ')]
 for it in items: it.setdefault('consumable',False); it.setdefault('kind','look')
-out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need,'CHROMES':chromes,'SMS_LINES':sms,'SECRETS':secrets,'CONVOS':convos,'DATE_PLACES':dplaces,'BOND_TITLES':titles,'DATE_LINES':dlines,'GIFTS_R':gifts,'ITEMS':items}
+achievements=[obj(a,['id','title','desc']) for a in grab('Achievements.kt','val ALL = ')]
+secrets_list=[obj(a,['id','title','hint','reveal']) for a in grab('Batch7.kt','object Secrets {\n    val ALL = ')]
+challenges=[obj(a,['id','text','goal']) for a in grab('Batch7.kt','object WeeklyChallenges {\n    val POOL = ')]
+cityevents=[obj(a,['id','name','desc','task','event','xp','color']) for a in grab('Batch6.kt','object CityEvents {\n    val ALL = ')]
+chapters=[obj(a,['id','title','goal','text']) for a in grab('Batch5.kt','val CHAPTERS = ')]
+out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need,'CHROMES':chromes,'SMS_LINES':sms,'SECRETS':secrets,'CONVOS':convos,'DATE_PLACES':dplaces,'BOND_TITLES':titles,'DATE_LINES':dlines,'GIFTS_R':gifts,'ITEMS':items,'ACHIEVEMENTS':achievements,'SECRETS_LIST':secrets_list,'CHALLENGES':challenges,'CHAPTERS':chapters,'CITY_EVENTS':cityevents}
 with open(sys.argv[1],'w') as f:
     f.write('// Généré depuis le code du launcher (scripts/ktdata.py) : ne pas modifier à la main.\n')
     for k,v in out.items(): f.write(f'export const {k} = {json.dumps(v,ensure_ascii=False)};\n')

@@ -54,11 +54,13 @@ export function city(view, ctx, tab = 'map') {
       <div class="mono dim small" style="margin:16px 0 6px">LIEUX · ${Wd.visits()} VISITE(S)</div><div class="places"></div>`;
     const wrap = body.querySelector('.map'), cv = wrap.querySelector('canvas'), g = cv.getContext('2d'), labels = wrap.querySelector('.maplabels');
     const bunker = Wd.bunkerUnlocked(), spots = Wd.SPOTS.filter(s => s.placeId !== 'bunker' || bunker);
-    const proj = (W, H, u, v, z = 0) => { const a = W * 0.46, b = a * 0.55; return [W / 2 + (u - v) * a, H * 0.30 + (u + v) * b - z * W]; };
-    let W = 0, H = 0;
+    // Projection isométrique ; en paysage (écran d'ordinateur) la ville est centrée dans un cadre plus large que haut.
+    let W = 0, H = 0, A = 0, SW = 0, OY = 0;
+    const proj = (_W, _H, u, v, z = 0) => [W / 2 + (u - v) * A, OY + (u + v) * A * 0.55 - z * SW];
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      W = wrap.clientWidth; H = W / 0.95; wrap.style.height = H + 'px';
+      W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
+      A = land ? Math.min(W * 0.42, H * 0.58) : W * 0.46; SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * 0.30;
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
@@ -103,8 +105,8 @@ export function city(view, ctx, tab = 'map') {
         const pts = spots.filter(s => s.district === d.id); if (!pts.length) return;
         const c = P(pts.reduce((a, s) => a + s.x, 0) / pts.length, pts.reduce((a, s) => a + s.y, 0) / pts.length);
         g.save(); g.translate(c[0], c[1]); g.scale(1, 0.54);
-        const rg = g.createRadialGradient(0, 0, 0, 0, 0, W * 0.26); rg.addColorStop(0, rgba(d.color, 0.2)); rg.addColorStop(1, rgba(d.color, 0));
-        g.fillStyle = rg; g.beginPath(); g.arc(0, 0, W * 0.26, 0, 7); g.fill(); g.restore();
+        const rg = g.createRadialGradient(0, 0, 0, 0, 0, SW * 0.26); rg.addColorStop(0, rgba(d.color, 0.2)); rg.addColorStop(1, rgba(d.color, 0));
+        g.fillStyle = rg; g.beginPath(); g.arc(0, 0, SW * 0.26, 0, 7); g.fill(); g.restore();
       });
       quad([P(0, 0.30), P(0.06, 0.30), P(0.06, 1), P(0, 1)], '#0b2a55'); line(P(0.06, 0.30), P(0.06, 1), 'rgba(61,123,255,.5)', 1.5);
       const n = 12;
@@ -125,7 +127,7 @@ export function city(view, ctx, tab = 'map') {
         quad([fl, fr, P(b.u + s, b.v + s, z), P(b.u - s, b.v + s, z)], '#0e1c27');
         quad([fr, br, P(b.u + s, b.v - s, z), P(b.u + s, b.v + s, z)], '#15283a');
         quad([P(b.u - s, b.v - s, z), P(b.u + s, b.v - s, z), P(b.u + s, b.v + s, z), P(b.u - s, b.v + s, z)], '#1b3346', rgba(glow, b.spot ? 0.9 : 0.25), b.spot ? 2 : 1);
-        const rows = Math.max(1, Math.min(14, Math.floor(z * W / 9))), wr = RInt(b.seed);
+        const rows = Math.max(1, Math.min(14, Math.floor(z * SW / 9))), wr = RInt(b.seed);
         for (let row = 0; row < rows; row++) for (let col = 0; col < 3; col++) {
           if (wr.nextIntUntil(100) < 35) continue;
           const f = (col + 0.5) / 3, zz = z * (row + 0.6) / (rows + 0.4), o = P(b.u - s + 2 * s * f, b.v + s, zz);
@@ -134,10 +136,10 @@ export function city(view, ctx, tab = 'map') {
         }
         const top = P(b.u, b.v, z), pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.u * 10);
         const style = b.spot ? (LANDMARKS[b.spot] || [])[2] : null;
-        if (style === 'antenna') { const tip = [top[0], top[1] - W * 0.08]; line(top, tip, '#8899aa', 2); circle(tip, 3.5, rgba(C.red, Math.floor(t * 2) % 2 === 0 ? 1 : 0.2)); }
-        else if (style === 'beams') for (let k = 0; k < 3; k++) { const ang = Math.sin(t * 1.3 + k * 2) * 0.6; line(top, [top[0] + ang * W * 0.25, top[1] - W * 0.35], rgba(glow, 0.25), 6); }
+        if (style === 'antenna') { const tip = [top[0], top[1] - SW * 0.08]; line(top, tip, '#8899aa', 2); circle(tip, 3.5, rgba(C.red, Math.floor(t * 2) % 2 === 0 ? 1 : 0.2)); }
+        else if (style === 'beams') for (let k = 0; k < 3; k++) { const ang = Math.sin(t * 1.3 + k * 2) * 0.6; line(top, [top[0] + ang * SW * 0.25, top[1] - SW * 0.35], rgba(glow, 0.25), 6); }
         else if (style === 'stalls') ['#ff4fa3', '#f6b35c', '#39e6ff', '#7cf29a'].forEach((c, k) => { const o = P(b.u - s * 0.6 + k * s * 0.4, b.v + s * 0.2, z + 0.012); g.fillStyle = rgba(c, 0.8); g.fillRect(o[0] - 5, o[1] - 3, 10, 5); });
-        else if (style === 'crane') { const bc = P(b.u + s * 0.5, b.v - s * 0.5, z), tc = [bc[0], bc[1] - W * 0.12]; line(bc, tc, C.amber, 2.5); line(tc, [tc[0] - W * 0.09, tc[1] + 4], C.amber, 2.5); line([tc[0] - W * 0.07, tc[1] + 3], [tc[0] - W * 0.07, tc[1] + W * 0.05], rgba(C.amber, 0.6), 1); }
+        else if (style === 'crane') { const bc = P(b.u + s * 0.5, b.v - s * 0.5, z), tc = [bc[0], bc[1] - SW * 0.12]; line(bc, tc, C.amber, 2.5); line(tc, [tc[0] - SW * 0.09, tc[1] + 4], C.amber, 2.5); line([tc[0] - SW * 0.07, tc[1] + 3], [tc[0] - SW * 0.07, tc[1] + SW * 0.05], rgba(C.amber, 0.6), 1); }
         else if (style === 'cross') { g.fillStyle = C.red; g.fillRect(top[0] - 2, top[1] - 12, 4, 14); g.fillRect(top[0] - 7, top[1] - 7, 14, 4); }
         else if (style === 'hazard') circle([top[0], top[1] - 6], 6, rgba(C.red, 0.4 + 0.5 * pulse));
         else if (style === 'sign') { g.fillStyle = rgba(glow, 0.6 + 0.4 * pulse); g.fillRect(top[0] - 12, top[1] - 12, 24, 7); }

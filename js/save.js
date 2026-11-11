@@ -38,9 +38,12 @@ export function setSet(f, k, arr) { file(f)[k] = { t: 'set', v: [...new Set(arr)
 export const name = () => get('cyberdeck', 'deckName', 'NETRUNNER');
 export function xp() { try { return parseInt(JSON.parse(get('cyberdeck', 'progress', '{}')).xp || '0', 10) || 0; } catch { return 0; } }
 export const raw = (f) => file(f);
+let xpHook = null;
+export function setXpHook(f) { xpHook = f; }
 export function addXp(n) {
   // Stim XP (marché noir ou cadeau) : XP doublée pendant 24 h, comme sur le téléphone.
   if (n > 0 && get('cyberdeck_b5', 'boostUntil', 0) > Date.now()) n *= 2;
+  if (n > 0 && xpHook) xpHook(n);
   let p = {}; try { p = JSON.parse(get('cyberdeck', 'progress', '{}')); } catch { /* vide */ }
   p.xp = String(xp() + n); setS('cyberdeck', 'progress', JSON.stringify(p)); persist();
 }

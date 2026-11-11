@@ -249,3 +249,95 @@ canvas.infil { width: min(420px, 100%); cursor: pointer; margin: 0 auto; }
 /* menu sur sa propre ligne : 8 onglets */
 #nav { order: 3; flex: none; width: 100%; justify-content: flex-start; }
 .top > span:last-child { margin-left: auto; }
+
+/* ═══ Grand format : l'interface occupe tout l'écran, icônes et zones plus grandes */
+.frame { max-width: 1680px; padding: 18px 32px 60px; }
+.doors { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.door { min-height: 200px; padding: 20px 20px 20px 28px; gap: 6px; justify-content: flex-end; }
+.door > i { width: 4px; }
+.door .dic { font-size: 60px; height: 76px; }
+.door .dic svg { width: 64px; height: 64px; }
+.door b { font-size: 30px; }
+.door .tiny { font-size: 13px; }
+.door em { font-size: 15px; padding: 3px 11px; top: 16px; right: 18px; }
+.door.wide { min-height: 170px; }
+.tiles { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+.tile { min-height: 200px; padding: 20px; justify-content: flex-end; gap: 6px; }
+.tile .tic { font-size: 58px; height: 74px; }
+.tile b { font-size: 27px; } .tile .tiny { font-size: 13px; } .tile em { font-size: 13px; right: 16px; bottom: 14px; }
+.sheethead h1 { font-size: 56px; }
+/* holophone plein écran */
+.holo { padding: 20px 24px; min-height: calc(100vh - 170px); }
+.holohead h2 { font-size: 40px; }
+.contacts { grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 10px; }
+.contacts.one { max-width: none; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); }
+.crow { padding: 12px; gap: 16px; } .cmid b { font-size: 23px; } .cmid > span { font-size: 15px; } .cright { width: 140px; font-size: 14px; } .affbar { width: 120px; height: 7px; }
+.bigp { width: 220px; height: 220px; } .callhead h2 { font-size: 38px; } .callinfo { font-size: 18px; gap: 22px; }
+.calllog { max-height: 46vh; } .cline p { font-size: 19px; } .choice { font-size: 19px; padding: 12px 16px; }
+.bubble { font-size: 18px; }
+/* jeux plein écran */
+.ovin { width: min(1200px, 100%); }
+.ovhead h2 { font-size: 48px; } .x { width: 56px; height: 56px; font-size: 30px; }
+.hint { font-size: 16px; } .stats { font-size: 20px; }
+canvas.circ { width: min(76vh, 100%); }
+.matrix { max-width: 760px; gap: 6px; } .matrix button { font-size: 30px; }
+.buffer span { width: 58px; height: 58px; font-size: 22px; }
+.daemon span { font-size: 20px; padding: 4px 10px; }
+.guess span { width: 58px; height: 58px; font-size: 26px; } .keys { max-width: 760px; } .keys button { height: 72px; font-size: 30px; }
+.reflex { max-width: min(68vh, 720px); }
+.wave canvas { height: 240px; } .dials b { font-size: 52px; }
+.lanes { height: 64vh; } .virus { width: 54px; height: 54px; font-size: 20px; }
+.pads { max-width: min(62vh, 640px); }
+.words button { font-size: 24px; padding: 16px; }
+.packet { width: 210px; height: 210px; } .packet b { font-size: 70px; } .ports button { height: 140px; } .ports b { font-size: 40px; } .ports span { font-size: 15px; }
+canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
+.hgrid { max-width: 760px; } .hgrid button b { font-size: 26px; }
+.result b { font-size: 20px; } .result .mono { font-size: 18px; }
+/* ville */
+.map { width: 100%; max-width: 1500px; }
+.maplabel b { font-size: 13px; } .maplabel span { font-size: 11px; }
+.places { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.place { height: 180px; padding: 18px; gap: 4px; } .place .pic { font-size: 42px; } .place b { font-size: 22px; } .place .tiny { font-size: 13px; } .place em { font-size: 13px; right: 16px; bottom: 14px; }
+.reps b { font-size: 16px; } .reps div { padding: 10px; }
+.tabs button { font-size: 17px; padding: 14px; }
+.offer b { font-size: 18px; } .exppanel { padding: 18px; } .exphead { font-size: 15px; }
+.encounter { width: min(760px, 100%); padding: 22px; } .encounter p { font-size: 19px; } .echoice { font-size: 18px; padding: 14px; } .ehead b { font-size: 24px; }
+/* cyberware et marché */
+.slot { height: 64px; font-size: 16px; } .chrome { padding: 12px 4px; } .cm b { font-size: 19px; } .check { width: 28px; height: 28px; }
+.item { padding: 14px 16px; } .im b { font-size: 20px; }
+/* quêtes et succès */
+.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-top: 16px; }
+.qcard { border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); background: #0a1219; padding: 18px; display: flex; flex-direction: column; gap: 8px;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+.qcard h3 { color: var(--c); font: 15px "Share Tech Mono"; letter-spacing: .15em; }
+.qcard p { margin: 0; font-size: 17px; } .qcard .btn { align-self: flex-start; }
+.chal { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); } .chal b { font-size: 17px; }
+.chapters { display: flex; flex-direction: column; gap: 8px; }
+.chapter { border: 1px solid var(--line); background: #0a1219; padding: 12px 16px; }
+.chapter.open { border-color: color-mix(in srgb, var(--amber) 50%, transparent); }
+.chapter summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; list-style: none; }
+.chapter summary b { font-size: 21px; } .chapter summary .mono.small { color: var(--dim); }
+.chapter p { font-size: 18px; line-height: 1.5; white-space: normal; max-width: 1000px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.hcard { border: 1px solid var(--line); background: #0a1219; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; opacity: .45; }
+.hcard.own { opacity: 1; } .hcard.t1.own { border-color: #c98b5a; } .hcard.t2.own { border-color: #c9d3dc; } .hcard.t3.own { border-color: #ffd27a; box-shadow: 0 0 18px rgba(255, 210, 122, .25); }
+.hcard b { font-size: 17px; } .hcard em { font-size: 14px; color: var(--hcyan); }
+.achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 16px; }
+.ach { display: flex; gap: 14px; align-items: center; border: 1px solid var(--line); background: #0a1219; padding: 14px 16px; opacity: .55; }
+.ach.ok { opacity: 1; border-color: color-mix(in srgb, var(--primary) 60%, transparent); }
+.ach .aic { font-size: 34px; color: var(--primary); } .ach.secret .aic { color: var(--amber); }
+.ach div { display: flex; flex-direction: column; } .ach b { font-size: 19px; } .ach em { font-size: 14px; color: var(--hcyan); margin-top: 4px; }
+/* NEURA */
+.neuragrid { display: grid; grid-template-columns: minmax(300px, 640px) 1fr; gap: 30px; align-items: center; }
+.neuragrid canvas { width: 100%; aspect-ratio: 1; }
+.neuratalk { display: flex; flex-direction: column; gap: 12px; }
+.nq { font-size: 22px; color: #cfffff; margin: 0; line-height: 1.45; border-left: 3px solid #6ff3ff; padding-left: 16px; }
+.neuratalk .btn { align-self: flex-start; }
+@media (max-width: 900px) { .neuragrid { grid-template-columns: 1fr; } .contacts, .contacts.one { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .frame { padding: 12px 14px 40px; }
+  .doors, .tiles { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .door, .tile { min-height: 150px; padding: 14px; } .door .dic, .tile .tic { font-size: 40px; height: 52px; } .door .dic svg { width: 44px; height: 44px; }
+  .door b, .tile b { font-size: 20px; } .qgrid { grid-template-columns: 1fr; }
+  .bigp { width: 120px; height: 120px; } .holo { padding: 12px; } .cmid b { font-size: 18px; } .cright { width: 90px; } .affbar { width: 70px; }
+}

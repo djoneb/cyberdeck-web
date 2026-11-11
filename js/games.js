@@ -3,6 +3,7 @@ import * as S from './save.js';
 import * as Wd from './world.js';
 import { R, today, epochDay } from './krand.js';
 import { itemActive, chromeActive } from './social.js';
+import * as Q from './quests.js';
 
 export const GAMES = [
   ['breach', '⌗', 'Breach', 'matrice de codes', '+25 XP', 'var(--primary)'],
@@ -54,7 +55,11 @@ export function openGame(id, ctx) {
     onClose: (f) => cleanups.push(f),
     toast: ctx.toast,
     /** XP, record et gigs du jour liés au jeu. */
-    reward(ev) { const done = ev ? Wd.questEvent(ev) : []; done.forEach(c => ctx.toast(`Gig de ${c.name} bouclé : rappelle-le pour être payé·e`)); ctx.changed(); },
+    reward(ev) {
+      const done = ev ? Wd.questEvent(ev) : []; done.forEach(c => ctx.toast(`Gig de ${c.name} bouclé : rappelle-le pour être payé·e`));
+      if (ev) { const ce = Q.cityEventCheck(ev); if (ce) ctx.toast('ÉVÉNEMENT DE VILLE · ' + ce); const ch = Q.challenge(ev); if (ch) ctx.toast(`Défi de la semaine réussi : « ${ch.text} »`); }
+      ctx.changed();
+    },
     result(ok, title, line, again) {
       const box = el(`<div class="result ${ok ? 'ok' : 'ko'}"><div class="mono">${title}</div><b>${line}</b><button class="btn main">Rejouer ›</button></div>`);
       box.querySelector('button').onclick = again; body.appendChild(box); box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -272,7 +277,7 @@ function circuits(body, api, again) {
       S.setI('cyberdeck_b7', 'circ_solved', S.get('cyberdeck_b7', 'circ_solved', 0) + 1);
       const best = S.get('cyberdeck_b7', 'circ_best_' + n, 0); if (!best || s < best) S.setI('cyberdeck_b7', 'circ_best_' + n, s);
       if (daily && !dailyDone()) { S.setS('cyberdeck_b7', 'daily_circuit', today()); xp += 50; }
-      S.addXp(xp); won = [s, xp]; sfx.ok(); api.reward(null); rec();
+      S.addXp(xp); won = [s, xp]; sfx.ok(); Q.challenge('run'); api.reward(null); rec();
       body.querySelector('#ct').textContent = `⏱ ${s} s · ${moves} coups`;
       const box = el(`<div class="result ok"><div class="mono">> COURANT RÉTABLI</div><b>${s} s · ${moves} coups · +${xp} XP</b><button class="btn main">Circuit suivant ›</button></div>`);
       box.querySelector('button').onclick = () => { circDaily = false; again(); }; body.querySelector('#cres').appendChild(box);

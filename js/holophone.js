@@ -51,7 +51,7 @@ export function holophone(view, ctx, callId = null) {
     r.innerHTML = `<span class="pwrap"></span><span class="cmid"><b>${esc(c.name.toUpperCase())}</b><span class="dim">${esc(c.role)}</span><span class="mono small" style="color:${col}">${esc(status)}</span></span>
       <span class="cright"><span style="color:${aff >= 60 ? 'var(--amber)' : 'var(--dim)'}">${Wd.relation(aff, c.romance, partner)}</span>
       <span class="affbar"><i style="width:${aff}%;background:${aff >= 60 ? 'var(--amber)' : 'var(--hred)'}"></i></span>${hi ? '<span class="mono" style="color:var(--hcyan)">☎</span>' : ''}</span>`;
-    const pw = r.querySelector('.pwrap'); pw.appendChild(portraitCanvas(c, 56, aff >= 90 || partner));
+    const pw = r.querySelector('.pwrap'); pw.appendChild(portraitCanvas(c, 76, aff >= 90 || partner));
     if (partner || aff >= 60) pw.insertAdjacentHTML('beforeend', `<em>${partner ? '♥' : '★'}</em>`);
     r.onclick = () => call(c);
     return r;
@@ -68,7 +68,7 @@ export function holophone(view, ctx, callId = null) {
       const r = el(`<button class="crow sms ${S.get('cyberdeck_b6', 'sms_' + m.key, false) ? '' : 'hi'}"><span class="pwrap"></span><span class="cmid">
         <span class="smstop"><b>${esc(c.name.toUpperCase())}</b><span class="mono tiny dim">${String(m.hour).padStart(2, '0')}:00</span></span>
         <span class="smstext">${esc(m.text)}</span><span class="mono tiny" style="color:var(--hcyan);align-self:flex-end">RÉPONDRE ›</span></span></button>`);
-      r.querySelector('.pwrap').appendChild(portraitCanvas(c, 42));
+      r.querySelector('.pwrap').appendChild(portraitCanvas(c, 56));
       r.onclick = () => call(c);
       box.appendChild(r);
     });
@@ -110,7 +110,7 @@ export function holophone(view, ctx, callId = null) {
     view.innerHTML = `<div class="holo">${head('HOLOCALL', true)}
       <div class="callhead"><div class="mono tiny" style="color:var(--hred);line-height:1.1">4846181<br>4150185<br>0001364<br>3361213</div>
         <div><div class="mono small" id="cst" style="color:var(--hred);letter-spacing:.2em">CONNECTING</div><h2 style="color:var(--hcyan)">${esc(c.name.toUpperCase())}</h2></div></div>
-      <div class="callinfo"><canvas width="300" height="300" class="bigp"></canvas><div id="cinfo"></div></div>
+      <div class="callinfo"><canvas width="440" height="440" class="bigp"></canvas><div id="cinfo"></div></div>
       <div class="calllog"><div id="extra"></div></div><div class="choices"></div></div>`;
     view.querySelector('#back').onclick = list;
     const isPartner = () => So.partner() === c.id;
@@ -126,8 +126,8 @@ export function holophone(view, ctx, callId = null) {
     };
     info();
     const cv = view.querySelector('.bigp'), g = cv.getContext('2d');
-    glitchT = setInterval(() => { drawPortrait(g, c, 300, 300, Wd.affinity(c.id) >= 90 || isPartner(), !connected); if (!connected) {
-      g.strokeStyle = 'rgba(232,80,91,.5)'; g.lineWidth = 1; for (let i = 0; i < 40; i++) { g.beginPath(); g.moveTo(Math.random() * 300, 0); g.lineTo(Math.random() * 300, 300); g.stroke(); } } }, 90);
+    glitchT = setInterval(() => { drawPortrait(g, c, 440, 440, Wd.affinity(c.id) >= 90 || isPartner(), !connected); if (!connected) {
+      g.strokeStyle = 'rgba(232,80,91,.5)'; g.lineWidth = 1; for (let i = 0; i < 40; i++) { g.beginPath(); g.moveTo(Math.random() * 440, 0); g.lineTo(Math.random() * 440, 440); g.stroke(); } } }, 90);
     const log = view.querySelector('.calllog'), choices = view.querySelector('.choices'), extra = view.querySelector('#extra');
     const paintExtra = () => {
       extra.innerHTML = '';

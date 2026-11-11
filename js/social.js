@@ -1,6 +1,7 @@
 // Messages, conversations, romance, piratage de dossiers, cyberware et marché noir (mêmes règles et clés que le launcher).
 import * as S from './save.js';
 import { R, hashCode, today, epochDay } from './krand.js';
+import * as Q from './quests.js';
 import { CONTACTS, SMS_LINES, SECRETS, CONVOS, DATE_PLACES, BOND_TITLES, DATE_LINES, GIFTS_R, CHROMES, ITEMS } from './gamedata.js';
 export { SECRETS, CONVOS, DATE_PLACES, CHROMES, ITEMS };
 
@@ -47,7 +48,7 @@ export function convoReceived() { const t = convoToday(); return t && hour() >= 
 export function convoPending() { const c = convoReceived(); return c && convoAnswered(c.id) < 0 ? c : null; }
 export function answerConvo(c, idx) {
   if (convoAnswered(c.id) >= 0) return;
-  const ch = c.choices[idx]; S.setI(B6, 'cva_' + c.id, idx); addAff(c.contactId, ch.aff); S.addXp(ch.xp); S.persist();
+  const ch = c.choices[idx]; S.setI(B6, 'cva_' + c.id, idx); Q.challenge('convo'); addAff(c.contactId, ch.aff); S.addXp(ch.xp); S.persist();
 }
 export const unreadCount = () => smsReceived().filter(m => smsReplied(m.key) < 0).length + (convoPending() ? 1 : 0);
 
@@ -56,7 +57,7 @@ export const hackUnlocked = (id) => S.get(B6, 'hack_' + id, false);
 export const hackTriesLeft = (id) => 3 - S.get(B6, `hackt_${today()}_${id}`, 0);
 export function finishHack(id, ok) {
   const k = `hackt_${today()}_${id}`; S.setI(B6, k, S.get(B6, k, 0) + 1);
-  if (ok) { S.setB(B6, 'hack_' + id, true); addAff(id, 5); S.addXp(30); }
+  if (ok) { S.setB(B6, 'hack_' + id, true); addAff(id, 5); S.addXp(30); Q.challenge('hack'); }
   S.persist();
 }
 
@@ -92,7 +93,7 @@ export function checkDate() {
   const id = dateWith(); if (!id || Date.now() < dateUntil()) return null;
   const place = datePlace(); clearDate();
   const before = bondLevel(bond(id));
-  addBond(id, place?.bond ?? 15); addAff(id, 3); S.addXp(place?.xp ?? 30); S.persist();
+  addBond(id, place?.bond ?? 15); addAff(id, 3); Q.challenge('date'); S.addXp(place?.xp ?? 30); S.persist();
   const after = bondLevel(bond(id)), c = CONTACTS.find(x => x.id === id);
   const lines = DATE_LINES[id]; const line = lines ? lines[Math.floor(Math.random() * lines.length)] : 'C\'était un très beau moment. Merci.';
   return { title: 'RENDEZ-VOUS TERMINÉ', text: `${c.name} : « ${line} »` + (after > before ? `  ♥ Lien niv ${after}` : '') };

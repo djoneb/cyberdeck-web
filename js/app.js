@@ -8,6 +8,8 @@ import { phoneGlyph } from './portrait.js';
 import * as Wd from './world.js';
 import * as So from './social.js';
 import { cyberware, market, PALETTES, WEB_THEME_KEY } from './market.js';
+import { quetes, succes } from './questsui.js';
+import * as Q from './quests.js';
 import * as Sync from './sync.js';
 
 const view = document.getElementById('view');
@@ -15,7 +17,7 @@ const nav = document.getElementById('nav');
 const fileInput = document.getElementById('file');
 let stop = null, leaves = [];
 
-const TABS = [['profil', 'PROFIL'], ['holophone', 'HOLOPHONE'], ['jeux', 'JEUX'], ['ville', 'LA VILLE'], ['cyber', 'CYBERWARE'], ['marche', 'MARCHÉ'], ['neura', 'NEURA'], ['sauvegarde', 'SAUVEGARDE']];
+const TABS = [['profil', 'PROFIL'], ['holophone', 'HOLOPHONE'], ['jeux', 'JEUX'], ['quetes', 'QUÊTES'], ['ville', 'LA VILLE'], ['cyber', 'CYBERWARE'], ['marche', 'MARCHÉ'], ['succes', 'SUCCÈS'], ['neura', 'NEURA'], ['sauvegarde', 'SAUVEGARDE']];
 const ctx = {
   toast, onLeave: (f) => leaves.push(f), level: () => level(S.xp()),
   changed: () => { if (S.hasSave()) document.getElementById('savestate').textContent = `NIV ${level(S.xp())} · ${S.xp()} XP · €$ ${S.eddies()}`; },
@@ -42,7 +44,7 @@ function go(tab, arg) {
   nav.innerHTML = S.hasSave() ? TABS.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-k="${k}">${l}</button>`).join('') : '';
   nav.querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.k));
   document.getElementById('savestate').textContent = 'AUCUNE PARTIE'; ctx.changed();
-  const pages = { accueil, profil, neura, jeux, holophone: () => holoPage(view, ctx, arg), ville: () => city(view, ctx, arg || 'map'), cyber: () => cyberware(view, ctx), marche: () => market(view, ctx), sauvegarde };
+  const pages = { accueil, profil, neura, jeux, holophone: () => holoPage(view, ctx, arg), ville: () => city(view, ctx, arg || 'map'), cyber: () => cyberware(view, ctx), marche: () => market(view, ctx), quetes: () => quetes(view, ctx), succes: () => succes(view), sauvegarde };
   (pages[tab] || profil)();
   window.scrollTo(0, 0);
   location.hash = tab;
@@ -86,6 +88,8 @@ function profil() {
   <div class="doors">
     ${door('holophone', '☎', 'HOLOPHONE', 'contacts · messages · ♥', 'var(--info)', holoBadge())}
     ${door('jeux', '⌗', 'JEUX', 'breach · circuits · infiltration', 'var(--primary)')}
+    ${door('quetes', '☰', 'QUÊTES', 'défis · récit · cartes holo', 'var(--amber)', Q.challenges().filter(c => Q.challengeDone(c) && !Q.claimed(c.id)).length)}
+    ${door('succes', '✦', 'SUCCÈS', `${S.achievements().length} débloqués · secrets`, 'var(--primary)')}
     ${door('neura', '◈', 'NEURA', 'stade ' + stageOwned() + ' · ' + NEURA_STAGES[stageOwned() - 1], '#6ff3ff')}
     ${door('cyber', '⬡', 'CYBERWARE', `implants ${So.equipped().length}/${So.slots()} · marché`, '#b98cff')}
     ${door('marche', '€$', 'MARCHÉ NOIR', `${S.eddies()} €$ · apparences · fonctions`, 'var(--amber)')}
@@ -101,11 +105,16 @@ const holoBadge = () => So.unreadCount() + Wd.available().filter(id => Wd.gigSta
 
 function neura() {
   const st = stageOwned();
-  view.innerHTML = `<div class="label">NEURA // STADE ${st} · ${NEURA_STAGES[st - 1].toUpperCase()}</div>
-  <div class="center"><canvas width="560" height="560" style="width:min(460px,88vw)"></canvas>
-  <p class="dim" style="max-width:560px;text-align:center">« Liaison établie depuis un terminal fixe. Je préfère ton téléphone, mais je m'adapte, ${esc(S.name())}. »</p>
-  <p class="mono dim" style="font-size:12px">Les stades suivants s'achètent au marché noir du launcher.</p></div>`;
-  stop = drawNeura(view.querySelector('canvas'), st, true);
+  view.innerHTML = `<div class="neurapage"><div class="label">NEURA // STADE ${st} · ${NEURA_STAGES[st - 1].toUpperCase()}</div>
+  <div class="neuragrid"><canvas width="760" height="760"></canvas>
+  <div class="neuratalk"><div class="mono small" style="color:#6ff3ff">LIAISON TERMINAL FIXE // MODE SILENCIEUX</div>
+    <p class="nq">« Bonjour, ${esc(S.name())}. Ici, sur ce terminal, je reste en veille : je n'aime pas parler à travers un écran de bureau. Les murs des tours ont des oreilles. »</p>
+    <p class="nq">« Si tu veux discuter, prends ton téléphone : c'est là que je vis vraiment. Je t'y attends. »</p>
+    <div class="notice">La discussion avec NEURA se fait uniquement sur le téléphone (launcher Cyberdeck).</div>
+    <div class="mono dim small" style="margin-top:14px">Ses stades d'évolution s'achètent au marché noir (ici ou sur le téléphone).</div>
+    <button class="btn main" data-go="marche" style="margin-top:10px">Marché noir ›</button></div></div></div>`;
+  view.querySelector('[data-go]').onclick = () => go('marche');
+  stop = drawNeura(view.querySelector('canvas'), st, false);
 }
 
 function jeux() {
@@ -197,6 +206,7 @@ function applyTheme() {
 }
 S.load();
 applyTheme();
+S.setXpHook((n) => { const c = Q.challenge('xp', n); if (c) toast(`Défi de la semaine réussi : « ${c.text} »`); });
 // Fin de rendez-vous : vérifiée régulièrement, même si on est sur une autre page.
 setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) { popup(r.title, r.text); ctx.changed(); } }, 15000);
 go((location.hash || '#profil').slice(1) || 'profil');
