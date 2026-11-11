@@ -39,6 +39,12 @@ jobs:
           cd relay && npx --yes wrangler@3 deploy
           echo "export const RELAY = \"https://cyberdeck-relay.$SUB.workers.dev\";" > ../js/config.js
           cat ../js/config.js
+          # Test du relais (dépôt puis lecture d'un paquet factice)
+          URL="https://cyberdeck-relay.$SUB.workers.dev/box/0123456789abcdef0123456789abcdef"
+          for i in 1 2 3 4 5 6; do
+            if curl -sf -X PUT --data "test" "$URL" >/dev/null && [ "$(curl -sf "$URL")" = "test" ]; then echo "RELAIS OK"; curl -s -X DELETE "$URL" >/dev/null; break; fi
+            echo "relais pas encore joignable ($i)"; sleep 20
+          done
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
