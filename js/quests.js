@@ -63,3 +63,21 @@ export const quote = (c, tier) => tier === 1 ? c.hello[0] : tier === 2 ? c.thank
 
 // ── Secrets
 export const secretFound = (id) => S.get(B7, 'secret_' + id, false);
+
+// ── Humeur de NEURA (mêmes règles et couleurs que le bandeau du launcher)
+export const gamesToday = () => S.get('cyberdeck_b9', 'games_' + today(), 0);
+export function addGame() { S.setI('cyberdeck_b9', 'games_' + today(), gamesToday() + 1); S.persist(); }
+export function rivalPending() {
+  return R(epochDay() * 131 + 7).nextIntUntil(3) === 0 && new Date().getHours() >= 14 && S.get('cyberdeck_b9', 'rival_' + today(), null) === null;
+}
+export function streakNow() { const last = S.get('cyberdeck_b9', 'streak_last', -1); return last >= epochDay() - 1 ? S.get('cyberdeck_b9', 'streak', 0) : 0; }
+export function feeling() {
+  const h = new Date().getHours(), focus = Number(S.get('cyberdeck', 'focusUntil', '0')) > Date.now(), g = gamesToday(), st = streakNow();
+  if (h >= 1 && h <= 4) return { id: 'worry', label: 'INQUIÈTE', color: '#ff6b6b', line: `Il est ${h} h. Ton cortex a besoin de sommeil, netrunner.` };
+  if (focus) return { id: 'proud', label: 'CONCENTRÉE', color: '#7cf29a', line: 'Focus en cours. Je bloque tout ce qui pourrait te distraire.' };
+  if (g >= 4) return { id: 'playful', label: 'JOUEUSE', color: '#ff4fd8', line: `${g} parties aujourd'hui ! Tu veux que je te batte à la prochaine ?` };
+  if (rivalPending()) return { id: 'alert', label: 'EN ALERTE', color: '#ffb13b', line: 'Spectre rôde sur le réseau. Il faut le contrer (sur ton téléphone).' };
+  if (st >= 7) return { id: 'proud', label: 'FIÈRE', color: '#7cf29a', line: `${st} jours d'affilée. Je commence à m'habituer à toi.` };
+  if (h >= 5 && h <= 9) return { id: 'calm', label: 'MATINALE', color: '#6ff3ff', line: 'Bonjour. La ville se réveille, et moi avec toi.' };
+  return { id: 'calm', label: 'EN LIGNE', color: '#6ff3ff', line: 'Liaison stable. Pour discuter, retrouve-moi sur ton téléphone.' };
+}

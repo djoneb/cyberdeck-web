@@ -59,6 +59,7 @@ export function claimGig(c, g) {
 // ── Mini-jeux
 export function finishGame(id, score, xp) {
   const k = 'mg_best_' + id; if (score > S.get('cyberdeck_b7', k, 0)) S.setI('cyberdeck_b7', k, score);
+  Q.addGame();
   if (xp > 0) S.addXp(xp); S.persist();
 }
 

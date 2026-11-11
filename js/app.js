@@ -84,6 +84,7 @@ function profil() {
       <div class="chips"><span class="chip" style="color:var(--amber)">€$ ${S.eddies()}</span><span class="chip" style="color:var(--cy)">✦ ${S.achievements().length} succès</span>
       ${S.streak() ? `<span class="chip" style="color:#ff7a2e">🔥 ${S.streak()} j</span>` : ''}</div></div>
   </div>
+  ${neuraStrip()}
   <div class="label">NETRUNNER</div>
   <div class="doors">
     ${door('holophone', '☎', 'HOLOPHONE', 'contacts · messages · ♥', 'var(--info)', holoBadge())}
@@ -98,6 +99,17 @@ function profil() {
   </div>
   <p class="notice" style="margin-top:22px">Les gigs liés au téléphone (applis, radar, focus) restent à faire sur le launcher.</p>`;
   view.querySelectorAll('[data-go]').forEach(d => d.onclick = () => go(d.dataset.go));
+  const strip = view.querySelector('.nstrip');
+  if (strip) { stop = drawNeura(strip.querySelector('canvas'), stageOwned(), false); strip.onclick = () => go(strip.dataset.to, strip.dataset.arg || undefined); }
+}
+// Bandeau de NEURA : son humeur du moment et ce qu'elle a d'important à dire (comme sur le téléphone).
+function neuraStrip() {
+  const f = Q.feeling(), cv = So.convoPending(), ce = Q.cityEvent();
+  let line = f.line, to = 'neura', arg = '';
+  if (cv) { line = `${Wd.contact(cv.contactId)?.name || 'Un contact'} t'a écrit. Ta réponse compte.`; to = 'holophone'; arg = cv.contactId; }
+  else if (f.id !== 'alert' && ce && !Q.cityEventDone()) { line = `${ce.name} en cours : ${ce.task.charAt(0).toLowerCase()}${ce.task.slice(1)}.`; to = 'quetes'; }
+  return `<button class="nstrip" style="--c:${f.color}" data-to="${to}" data-arg="${arg}"><canvas width="96" height="96"></canvas>
+    <span class="nsm"><span class="mono">NEURA // ${f.label}</span><b>${esc(line)}</b></span><span class="nsa">›</span></button>`;
 }
 const door = (k, ic, t, s, col, badge = 0, wide = false) => `<button class="door ${wide ? 'wide' : ''}" data-go="${k}" style="--c:${col}"><i></i>
   <span class="dic">${ic === '☎' ? phoneGlyph('currentColor', 34) : ic}</span><b>${t}</b><span class="mono dim tiny">${s}</span>${badge ? `<em>${badge}</em>` : ''}</button>`;

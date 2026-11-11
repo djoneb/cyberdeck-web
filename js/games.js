@@ -277,7 +277,7 @@ function circuits(body, api, again) {
       S.setI('cyberdeck_b7', 'circ_solved', S.get('cyberdeck_b7', 'circ_solved', 0) + 1);
       const best = S.get('cyberdeck_b7', 'circ_best_' + n, 0); if (!best || s < best) S.setI('cyberdeck_b7', 'circ_best_' + n, s);
       if (daily && !dailyDone()) { S.setS('cyberdeck_b7', 'daily_circuit', today()); xp += 50; }
-      S.addXp(xp); won = [s, xp]; sfx.ok(); Q.challenge('run'); api.reward(null); rec();
+      S.addXp(xp); won = [s, xp]; sfx.ok(); Q.challenge('run'); Q.addGame(); api.reward(null); rec();
       body.querySelector('#ct').textContent = `⏱ ${s} s · ${moves} coups`;
       const box = el(`<div class="result ok"><div class="mono">> COURANT RÉTABLI</div><b>${s} s · ${moves} coups · +${xp} XP</b><button class="btn main">Circuit suivant ›</button></div>`);
       box.querySelector('button').onclick = () => { circDaily = false; again(); }; body.querySelector('#cres').appendChild(box);
