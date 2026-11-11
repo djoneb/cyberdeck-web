@@ -1,15 +1,29 @@
 import * as S from './save.js';
-import { rankOf, nextRank, level, levelProgress, avatarFile, AVATARS, CONTACTS, relation, NEURA_STAGES } from './data.js';
+import { rankOf, nextRank, level, levelProgress, avatarFile, NEURA_STAGES } from './data.js';
 import { drawNeura } from './neura.js';
-import { circuits, infiltration } from './games.js';
+import { GAMES, gameNote, openGame } from './games.js';
+import { holophone as holoPage } from './holophone.js';
+import { city } from './city.js';
+import { phoneGlyph } from './portrait.js';
+import * as Wd from './world.js';
 import * as Sync from './sync.js';
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');
 const fileInput = document.getElementById('file');
-let stop = null;
+let stop = null, leaves = [];
 
-const TABS = [['profil', 'PROFIL'], ['neura', 'NEURA'], ['jeux', 'JEUX'], ['holophone', 'HOLOPHONE'], ['sauvegarde', 'SAUVEGARDE']];
+const TABS = [['profil', 'PROFIL'], ['holophone', 'HOLOPHONE'], ['jeux', 'JEUX'], ['ville', 'LA VILLE'], ['neura', 'NEURA'], ['sauvegarde', 'SAUVEGARDE']];
+const ctx = {
+  toast, onLeave: (f) => leaves.push(f), level: () => level(S.xp()),
+  changed: () => { if (S.hasSave()) document.getElementById('savestate').textContent = `NIV ${level(S.xp())} · ${S.xp()} XP · €$ ${S.eddies()}`; },
+  popup,
+};
+function popup(title, text) {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="encounter" style="--c:var(--green)"><div class="mono small" style="color:var(--green)">${esc(title)}</div><p>${esc(text)}</p><button class="btn main">OK</button></div>`;
+  ov.querySelector('button').onclick = () => ov.remove(); document.body.appendChild(ov);
+}
 
 function toast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on');
@@ -18,14 +32,17 @@ function toast(msg) {
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function stageOwned() { let n = 1; for (const i of ['neura_evo2', 'neura_evo3', 'neura_evo4', 'neura_evo5']) { if (S.owned(i)) n++; else break; } return n; }
 
-function go(tab) {
+function go(tab, arg) {
+  applyTheme();
   if (stop) { stop(); stop = null; }
+  leaves.splice(0).forEach(f => f());
   if (!S.hasSave() && tab !== 'sauvegarde') tab = 'accueil';
   nav.innerHTML = S.hasSave() ? TABS.map(([k, l]) => `<button class="${k === tab ? 'on' : ''}" data-k="${k}">${l}</button>`).join('') : '';
   nav.querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.k));
-  document.getElementById('savestate').textContent = S.hasSave() ? 'PARTIE CHARGÉE' : 'AUCUNE PARTIE';
-  const pages = { accueil, profil, neura, jeux, holophone, sauvegarde };
+  document.getElementById('savestate').textContent = 'AUCUNE PARTIE'; ctx.changed();
+  const pages = { accueil, profil, neura, jeux, holophone: () => holoPage(view, ctx, arg), ville: () => city(view, ctx, arg || 'map'), sauvegarde };
   (pages[tab] || profil)();
+  window.scrollTo(0, 0);
   location.hash = tab;
 }
 
@@ -63,17 +80,20 @@ function profil() {
       <div class="chips"><span class="chip" style="color:var(--amber)">€$ ${S.eddies()}</span><span class="chip" style="color:var(--cy)">✦ ${S.achievements().length} succès</span>
       ${S.streak() ? `<span class="chip" style="color:#ff7a2e">🔥 ${S.streak()} j</span>` : ''}</div></div>
   </div>
-  <div class="label">ACCÈS</div>
-  <div class="grid">
-    ${door('neura', '◈', 'NEURA', 'stade ' + stageOwned() + ' · ' + NEURA_STAGES[stageOwned() - 1], 'var(--cy)')}
-    ${door('jeux', '⌗', 'JEUX', 'circuits · infiltration', 'var(--cy)')}
-    ${door('holophone', '☎', 'HOLOPHONE', 'contacts · relations', 'var(--red)')}
-    ${door('sauvegarde', '⇅', 'SAUVEGARDE', 'exporter vers le téléphone', 'var(--amber)')}
+  <div class="label">NETRUNNER</div>
+  <div class="doors">
+    ${door('holophone', '☎', 'HOLOPHONE', 'contacts · gigs · ♥', 'var(--info)', holoBadge())}
+    ${door('jeux', '⌗', 'JEUX', 'breach · circuits · infiltration', 'var(--primary)')}
+    ${door('neura', '◈', 'NEURA', 'stade ' + stageOwned() + ' · ' + NEURA_STAGES[stageOwned() - 1], '#6ff3ff')}
+    ${door('sauvegarde', '⇅', 'SAUVEGARDE', 'synchro avec le téléphone', 'var(--amber)')}
+    ${door('ville', '⌂', 'LA VILLE', 'lieux · rencontres · expéditions', 'var(--hcyan)', Wd.active().filter(a => Date.now() >= a.end).length, true)}
   </div>
   <p class="notice" style="margin-top:22px">Les gigs liés au téléphone (applis, radar, focus) restent à faire sur le launcher.</p>`;
   view.querySelectorAll('[data-go]').forEach(d => d.onclick = () => go(d.dataset.go));
 }
-const door = (k, ic, t, s, col) => `<div class="panel" data-go="${k}" style="--accent:${col};cursor:pointer;min-height:110px"><div style="font-size:28px;color:${col}">${ic}</div><h2>${t}</h2><div class="mono dim" style="font-size:12px">${s}</div></div>`;
+const door = (k, ic, t, s, col, badge = 0, wide = false) => `<button class="door ${wide ? 'wide' : ''}" data-go="${k}" style="--c:${col}"><i></i>
+  <span class="dic">${ic === '☎' ? phoneGlyph('currentColor', 34) : ic}</span><b>${t}</b><span class="mono dim tiny">${s}</span>${badge ? `<em>${badge}</em>` : ''}</button>`;
+const holoBadge = () => Wd.available().filter(id => Wd.gigState(id) === null || Wd.gigState(id) === 'done').length;
 
 function neura() {
   const st = stageOwned();
@@ -85,23 +105,11 @@ function neura() {
 }
 
 function jeux() {
-  view.innerHTML = `<div class="label">JEUX</div><div class="grid">
-    ${door('g-circ', '⌬', 'CIRCUITS', 'relie le courant · +25 XP', 'var(--cy)')}
-    ${door('g-infil', '◈', 'INFILTRATION', `niveau ${Math.max(1, S.get('cyberdeck_b9', 'infil_level', 1))} · +40 XP`, 'var(--red)')}
-  </div><div id="game" style="margin-top:20px"></div>`;
-  const zone = view.querySelector('#game');
-  const refresh = () => document.getElementById('savestate').textContent = `${S.xp()} XP · €$ ${S.eddies()}`;
-  view.querySelector('[data-go="g-circ"]').onclick = () => { if (stop) stop(); stop = null; circuits(zone, toast, refresh); };
-  view.querySelector('[data-go="g-infil"]').onclick = () => { if (stop) stop(); stop = infiltration(zone, toast, refresh); };
-}
-
-function holophone() {
-  view.innerHTML = `<div class="label">HOLOPHONE // CONTACTS</div><div class="grid">${CONTACTS.map(([id, n, role, em]) => {
-    const a = S.affinity(id);
-    return `<div class="panel" style="--accent:var(--red)"><div class="contact"><div class="em">${em}</div><div style="flex:1">
-      <h3 style="color:var(--red)">${esc(n.toUpperCase())}</h3><div class="dim" style="font-size:14px">${esc(role)}</div>
-      <div class="mono" style="font-size:12px;margin-top:4px">${relation(a)} · ${a}/100</div><div class="bar" style="--accent:var(--red)"><i style="width:${a}%"></i></div></div></div></div>`;
-  }).join('')}</div><p class="notice" style="margin-top:18px">Appels, gigs et conversations : dans une prochaine version du site.</p>`;
+  view.innerHTML = `<div class="sheethead"><h1 class="glitch" style="color:var(--primary)">JEUX</h1><div class="mono dim small">ENTRAÎNEMENT NETRUNNER · XP À LA CLÉ</div></div>
+  <div class="tiles">${GAMES.map(([id, ic, t, sub, , col]) => { const note = gameNote(id);
+    return `<button class="tile" data-g="${id}"><span class="tic" style="color:${col}">${ic}</span><b>${t}</b><span class="mono dim tiny">${sub}</span>${note ? `<em>${note}</em>` : ''}</button>`; }).join('')}</div>
+  <p class="dim small">Breach, Déchiffre et Réflexes valident aussi les gigs du Holophone acceptés aujourd'hui. Échap ou ✕ pour quitter un jeu.</p>`;
+  view.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGame(b.dataset.g, { toast, changed: () => { ctx.changed(); if (location.hash === '#jeux') jeux(); } }));
 }
 
 function sauvegarde() {
@@ -173,5 +181,14 @@ fileInput.onchange = async () => {
   fileInput.value = '';
 };
 
+// Couleurs du thème choisi dans le launcher (Réglages › Apparence), sinon celles par défaut.
+function applyTheme() {
+  const hex = (v, d) => typeof v === 'number' ? '#' + ((v >>> 0) & 0xffffff).toString(16).padStart(6, '0') : d;
+  const r = document.documentElement.style;
+  r.setProperty('--primary', hex(S.get('cyberdeck', 'primary'), '#00d8f0'));
+  r.setProperty('--secondary', hex(S.get('cyberdeck', 'secondary'), '#ff0a3c'));
+  r.setProperty('--info', hex(S.get('cyberdeck', 'info'), '#f5e400'));
+}
 S.load();
+applyTheme();
 go((location.hash || '#profil').slice(1) || 'profil');

@@ -30,6 +30,7 @@ function file(f) { save.files[f] = save.files[f] || {}; return save.files[f]; }
 export function get(f, k, def) { const e = save?.files?.[f]?.[k]; return e ? e.v : def; }
 export function setS(f, k, v) { file(f)[k] = { t: 's', v: String(v) }; }
 export function setI(f, k, v) { file(f)[k] = { t: 'i', v: Math.round(v) }; }
+export function setL(f, k, v) { file(f)[k] = { t: 'l', v: Math.round(v) }; }
 export function setB(f, k, v) { file(f)[k] = { t: 'b', v: !!v }; }
 export function setSet(f, k, arr) { file(f)[k] = { t: 'set', v: [...new Set(arr)] }; }
 
