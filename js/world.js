@@ -69,7 +69,7 @@ export function isOpen(s, h = hour()) {
   if (s.open === 0 && s.close === 24) return true;
   return s.open < s.close ? (h >= s.open && h < s.close) : (h >= s.open || h < s.close);
 }
-export const isNight = (h = hour()) => h >= 22 || h < 5;
+export const isNight = (h = hour()) => h >= 20 || h < 8;
 export const hoursLabel = (s) => (s.open === 0 && s.close === 24) ? '24/7' : `${String(s.open).padStart(2, '0')}h–${String(s.close % 24).padStart(2, '0')}h`;
 export const rep = (d) => S.get(B9, 'rep_' + d, 0);
 export function addRep(d, n) { S.setI(B9, 'rep_' + d, rep(d) + n); }
