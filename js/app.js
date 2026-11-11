@@ -127,17 +127,17 @@ function jeux() {
 
 function sauvegarde() {
   view.innerHTML = `<div class="label">TRANSFERT PAR QR CODE</div><div class="grid">
-    <div class="panel"><h3>Recevoir du téléphone</h3><p class="dim">Charge ici la partie du launcher.</p>
+    <div class="panel"><span class="pic">${phoneGlyph('currentColor', 60)}</span><h3>Recevoir du téléphone</h3><p class="dim">Charge ici la partie du launcher.</p>
       <button class="btn main" id="qrin" ${Sync.available() ? '' : 'disabled'}>QR code de réception</button></div>
-    <div class="panel" style="--accent:var(--green)"><h3>Envoyer au téléphone</h3><p class="dim">Renvoie ta partie du PC vers le launcher.</p>
+    <div class="panel" style="--accent:var(--green)"><span class="pic" style="color:var(--green)">⇅</span><h3>Envoyer au téléphone</h3><p class="dim">Renvoie ta partie du PC vers le launcher.</p>
       <button class="btn main" id="qrout" ${Sync.available() && S.hasSave() ? '' : 'disabled'}>QR code d'envoi</button></div>
   </div><div id="qrzone"></div>
   <div class="label">FICHIER</div><div class="grid">
-    <div class="panel"><h3>Renvoyer au téléphone</h3><p class="dim">Télécharge ta progression, puis dans le launcher : Paramètres → Sauvegarde → Restaurer une progression.</p>
+    <div class="panel"><span class="pic">⭳</span><h3>Renvoyer au téléphone</h3><p class="dim">Télécharge ta progression, puis dans le launcher : Paramètres → Sauvegarde → Restaurer une progression.</p>
       <button class="btn main" id="exp" ${S.hasSave() ? '' : 'disabled'}>Télécharger la sauvegarde</button></div>
-    <div class="panel" style="--accent:var(--amber)"><h3>Importer une sauvegarde</h3><p class="dim">Remplace la partie de ce navigateur.</p>
+    <div class="panel" style="--accent:var(--amber)"><span class="pic" style="color:var(--amber)">⭱</span><h3>Importer une sauvegarde</h3><p class="dim">Remplace la partie de ce navigateur.</p>
       <button class="btn" id="imp">Choisir un fichier</button></div>
-    <div class="panel" style="--accent:var(--red)"><h3>Effacer de ce navigateur</h3><p class="dim">La partie reste sur ton téléphone.</p>
+    <div class="panel" style="--accent:var(--red)"><span class="pic" style="color:var(--red)">✕</span><h3>Effacer de ce navigateur</h3><p class="dim">La partie reste sur ton téléphone.</p>
       <button class="btn red" id="del" ${S.hasSave() ? '' : 'disabled'}>Effacer</button></div>
   </div>
   <p class="notice" style="margin-top:18px">Un seul appareil à la fois : renvoie ta partie au téléphone avant d'y rejouer, sinon la dernière version restaurée écrase l'autre.</p>`;
