@@ -1,4 +1,4 @@
-name: Déployer le site
+name: Déployer le site et le relais
 on:
   push:
     branches: [main]
@@ -18,6 +18,28 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # Relais Cloudflare (transfert chiffré par QR code)
+      - name: Deploy relay (Cloudflare Worker)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Secrets Cloudflare absents : relais non déployé."; echo 'export const RELAY = "";' > js/config.js; exit 0
+          fi
+          API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain"
+          SUB=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API" | jq -r '.result.subdomain // empty')
+          if [ -z "$SUB" ]; then
+            SUB="cyberdeck-$(echo "$CLOUDFLARE_ACCOUNT_ID" | cut -c1-6)"
+            echo "Création du sous-domaine workers.dev : $SUB"
+            curl -s -X PUT -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+              --data "{\"subdomain\":\"$SUB\"}" "$API" | jq -c '.success, .errors'
+          fi
+          cd relay && npx --yes wrangler@3 deploy
+          echo "export const RELAY = \"https://cyberdeck-relay.$SUB.workers.dev\";" > ../js/config.js
+          cat ../js/config.js
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

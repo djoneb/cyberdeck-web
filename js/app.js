@@ -2,6 +2,7 @@ import * as S from './save.js';
 import { rankOf, nextRank, level, levelProgress, avatarFile, AVATARS, CONTACTS, relation, NEURA_STAGES } from './data.js';
 import { drawNeura } from './neura.js';
 import { circuits, infiltration } from './games.js';
+import * as Sync from './sync.js';
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');
@@ -36,12 +37,13 @@ function accueil() {
   <div class="grid">
     <div class="panel"><h3>Importer ma sauvegarde</h3><p class="dim">Dans le launcher : Paramètres → Sauvegarde → Exporter, puis ouvre le fichier ici.</p>
       <button class="btn main" id="imp">Importer un fichier</button></div>
-    <div class="panel" style="--accent:var(--amber)"><h3>Scanner avec le téléphone</h3><p class="dim">Transfert par QR code : bientôt disponible (relais chiffré).</p>
-      <button class="btn" disabled>Bientôt</button></div>
+    <div class="panel" style="--accent:var(--amber)"><h3>Scanner avec le téléphone</h3><p class="dim">Le launcher envoie ta partie, chiffrée, en scannant un QR code.</p>
+      <button class="btn main" id="qrin" ${Sync.available() ? '' : 'disabled'}>Afficher le QR code</button></div>
     <div class="panel" style="--accent:var(--violet)"><h3>Nouvelle partie</h3><p class="dim">Pour essayer sans téléphone.</p>
       <button class="btn" id="new">Commencer</button></div>
   </div>`;
   view.querySelector('#imp').onclick = () => fileInput.click();
+  view.querySelector('#qrin').onclick = () => qrReceive();
   view.querySelector('#new').onclick = () => { S.newGame(prompt('Ton nom de netrunner ?') || 'NETRUNNER'); go('profil'); };
 }
 
@@ -103,7 +105,13 @@ function holophone() {
 }
 
 function sauvegarde() {
-  view.innerHTML = `<div class="label">SAUVEGARDE</div><div class="grid">
+  view.innerHTML = `<div class="label">TRANSFERT PAR QR CODE</div><div class="grid">
+    <div class="panel"><h3>Recevoir du téléphone</h3><p class="dim">Charge ici la partie du launcher.</p>
+      <button class="btn main" id="qrin" ${Sync.available() ? '' : 'disabled'}>QR code de réception</button></div>
+    <div class="panel" style="--accent:var(--green)"><h3>Envoyer au téléphone</h3><p class="dim">Renvoie ta partie du PC vers le launcher.</p>
+      <button class="btn main" id="qrout" ${Sync.available() && S.hasSave() ? '' : 'disabled'}>QR code d'envoi</button></div>
+  </div><div id="qrzone"></div>
+  <div class="label">FICHIER</div><div class="grid">
     <div class="panel"><h3>Renvoyer au téléphone</h3><p class="dim">Télécharge ta progression, puis dans le launcher : Paramètres → Sauvegarde → Restaurer une progression.</p>
       <button class="btn main" id="exp" ${S.hasSave() ? '' : 'disabled'}>Télécharger la sauvegarde</button></div>
     <div class="panel" style="--accent:var(--amber)"><h3>Importer une sauvegarde</h3><p class="dim">Remplace la partie de ce navigateur.</p>
@@ -113,6 +121,8 @@ function sauvegarde() {
   </div>
   <p class="notice" style="margin-top:18px">Un seul appareil à la fois : renvoie ta partie au téléphone avant d'y rejouer, sinon la dernière version restaurée écrase l'autre.</p>`;
   view.querySelector('#imp').onclick = () => fileInput.click();
+  view.querySelector('#qrin').onclick = () => qrReceive();
+  view.querySelector('#qrout').onclick = () => qrSend();
   const e = view.querySelector('#exp'); if (e) e.onclick = () => {
     const blob = new Blob([S.exportJson()], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -120,6 +130,40 @@ function sauvegarde() {
     toast('Sauvegarde téléchargée');
   };
   view.querySelector('#del').onclick = () => { if (confirm('Effacer la partie de ce navigateur ?')) { localStorage.removeItem('cyberdeck-web-save'); location.reload(); } };
+}
+
+// ── QR code
+function qrBox(text, title, hint) {
+  let zone = document.getElementById('qrzone');
+  if (!zone) { view.insertAdjacentHTML('beforeend', '<div id="qrzone"></div>'); zone = document.getElementById('qrzone'); }
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  zone.innerHTML = `<div class="panel center" style="--accent:var(--amber);margin-top:16px"><h3>${title}</h3>
+    <div style="background:#fff;padding:14px;margin:12px 0">${q.createSvgTag({ cellSize: 6, margin: 0 })}</div>
+    <p class="dim" style="text-align:center;max-width:520px">${hint}</p><p class="mono" id="qrstate" style="color:var(--amber)">EN ATTENTE DU TÉLÉPHONE…</p>
+    <button class="btn" id="qrcancel">Annuler</button></div>`;
+  let cancelled = false;
+  zone.querySelector('#qrcancel').onclick = () => { cancelled = true; zone.innerHTML = ''; };
+  return { isCancelled: () => cancelled, state: (t) => { const el = document.getElementById('qrstate'); if (el) el.textContent = t; }, close: () => { zone.innerHTML = ''; } };
+}
+async function qrReceive() {
+  const s = Sync.newSession();
+  const box = qrBox(Sync.qrPayload('send', s), 'Scanne avec le launcher',
+    'Dans le launcher : Paramètres → Sauvegarde → « Synchroniser avec le PC », puis scanne ce code. Ta partie arrive chiffrée.');
+  try {
+    const json = await Sync.waitDownload(s, box.isCancelled);
+    if (!json) { box.state('Délai dépassé. Réessaie.'); return; }
+    S.importJson(json); box.close(); toast('Partie reçue du téléphone'); go('profil');
+  } catch (e) { box.state('Échec : ' + (e.message || e)); }
+}
+async function qrSend() {
+  const s = Sync.newSession();
+  try {
+    await Sync.upload(s, S.exportJson());
+    const box = qrBox(Sync.qrPayload('get', s), 'Scanne avec le launcher pour récupérer ta partie',
+      'Dans le launcher : Paramètres → Sauvegarde → « Synchroniser avec le PC ». Ta progression du PC remplace celle du téléphone.');
+    const ok = await Sync.waitPickedUp(s, box.isCancelled);
+    if (ok) { box.state('✓ PARTIE REÇUE PAR LE TÉLÉPHONE'); toast('Partie envoyée au téléphone'); } else box.state('Délai dépassé.');
+  } catch (e) { toast('Échec : ' + (e.message || e)); }
 }
 
 fileInput.onchange = async () => {
