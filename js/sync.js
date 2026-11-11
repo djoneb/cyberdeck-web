@@ -2,7 +2,12 @@
 // La clé n'est que dans le QR code : le relais ne stocke qu'un paquet illisible, effacé au bout de 10 minutes.
 import { RELAY } from './config.js';
 
-const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// Encodage par morceaux : String.fromCharCode(...tableau) plante au-delà de ~100 Ko (sauvegarde avec photo d'avatar).
+function b64u(buf) {
+  const u = new Uint8Array(buf); let bin = '';
+  for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
 const hex = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, '0')).join('');
 
@@ -24,7 +29,8 @@ export async function upload(s, json) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cryptoKey(s.raw), await gzip(json));
   const r = await fetch(`${RELAY}/box/${s.id}`, { method: 'PUT', body: b64u(iv) + '.' + b64u(ct) });
-  if (!r.ok) throw new Error('Relais indisponible');
+  if (r.status === 413) throw new Error('Sauvegarde trop lourde pour le relais (plus de 2 Mo)');
+  if (!r.ok) throw new Error('Relais indisponible (' + r.status + ')');
 }
 /** Attend le paquet du téléphone (10 min max). Renvoie le JSON déchiffré. */
 export async function waitDownload(s, isCancelled) {

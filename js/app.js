@@ -178,13 +178,19 @@ async function qrReceive() {
 }
 async function qrSend() {
   const s = Sync.newSession();
+  let zone = document.getElementById('qrzone');
+  if (zone) zone.innerHTML = '<div class="panel center" style="--accent:var(--amber);margin-top:16px"><h3>Chiffrement et envoi de ta partie…</h3></div>';
   try {
     await Sync.upload(s, S.exportJson());
     const box = qrBox(Sync.qrPayload('get', s), 'Scanne avec le launcher pour récupérer ta partie',
       'Dans le launcher : Paramètres → Sauvegarde → « Synchroniser avec le PC ». Ta progression du PC remplace celle du téléphone.');
     const ok = await Sync.waitPickedUp(s, box.isCancelled);
     if (ok) { box.state('✓ PARTIE REÇUE PAR LE TÉLÉPHONE'); toast('Partie envoyée au téléphone'); } else box.state('Délai dépassé.');
-  } catch (e) { toast('Échec : ' + (e.message || e)); }
+  } catch (e) {
+    toast('Échec : ' + (e.message || e));
+    zone = document.getElementById('qrzone');
+    if (zone) zone.innerHTML = `<div class="panel center" style="--accent:var(--red);margin-top:16px"><h3 style="color:var(--red)">Envoi impossible</h3><p>${esc(e.message || String(e))}</p><p class="dim">Vérifie ta connexion puis réessaie. Tu peux aussi utiliser « Télécharger la sauvegarde » ci-dessous.</p></div>`;
+  }
 }
 
 fileInput.onchange = async () => {
