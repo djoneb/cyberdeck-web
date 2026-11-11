@@ -1,6 +1,7 @@
 // Règles du monde (mêmes clés et mêmes formules que le launcher) : gigs, affinité, ville, expéditions.
 import * as S from './save.js';
 import { R, hashCode, today, epochDay } from './krand.js';
+import { chromeActive, itemActive } from './social.js';
 import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED } from './gamedata.js';
 
 export { CONTACTS, PLACES, DISTRICTS, SPOTS, CHAINS, CHAIN_NEED };
@@ -45,10 +46,12 @@ export function questEvent(ev) {
 }
 export function claimGig(c, g) {
   const aff = affinity(c.id);
-  const xp = Math.floor(g.xp * bonus(aff));
-  setGigState(c.id, 'claimed'); addAffinity(c.id, 8);
-  S.addXp(xp); const cash = Math.floor(g.xp / 3); S.addEddies(cash);
-  return `+${xp} XP · +${cash} €$ · affinité +8`;
+  const xp = Math.floor(g.xp * bonus(aff) * (chromeActive('synapse') ? 1.2 : 1));
+  const plus = chromeActive('empathy') ? 11 : 8, vip = itemActive('vip_pass');
+  setGigState(c.id, 'claimed'); addAffinity(c.id, plus);
+  S.addXp(xp); const cash = Math.floor(Math.floor(vip ? g.xp / 2 : g.xp / 3) * (chromeActive('wallet') ? 1.25 : 1)); S.addEddies(cash);
+  if (vip && c.id === 'lou') addAffinity(c.id, 4);
+  return `+${xp} XP · +${cash} €$ · affinité +${plus}`;
 }
 
 // ── Mini-jeux
@@ -79,9 +82,9 @@ export function present(placeId) {
   const r = R(epochDay() * 24 + hour() + hashCode(placeId));
   return pl.regulars.filter(() => r.nextIntUntil(100) < 40);
 }
-const COOLDOWN = 30 * 60000;
+const cooldown = () => (chromeActive('scanner') ? 15 : 30) * 60000;
 export const lastVisit = (id) => S.get(B8, 'city_last_' + id, 0);
-export const cooldownLeft = (id) => Math.max(0, lastVisit(id) + COOLDOWN - Date.now());
+export const cooldownLeft = (id) => Math.max(0, lastVisit(id) + cooldown() - Date.now());
 export const visits = () => S.get(B8, 'visits', 0);
 const pending = {};
 /** Arrivée dans un lieu : renvoie { encounter } ou { error }. */
@@ -133,7 +136,7 @@ export function choose(placeId, e, idx) {
   const cash = ch.eddies > 0 ? Math.floor(ch.eddies * mult / 100) : ch.eddies;
   if (cash) S.addEddies(cash);
   if (ch.aff && e.contactId) addAffinity(e.contactId, ch.aff);
-  const xp = Math.floor(ch.xp * mult / 100); if (xp > 0) S.addXp(xp);
+  const xp = Math.floor((chromeActive('charisma') ? Math.floor(ch.xp * 3 / 2) : ch.xp) * mult / 100); if (xp > 0) S.addXp(xp);
   S.persist();
   return { result: { ...ch, xp, eddies: cash, started } };
 }
@@ -167,7 +170,8 @@ export function startExpedition(e, runner = null) {
   const cur = active();
   if (cur.length >= 1) return 'Une seule expédition à la fois : termine celle en cours';
   const now = Date.now();
-  saveActive([...cur, { exp: e, start: now, end: now + e.minutes * 60000, runner }]);
+  const mins = chromeActive('courier') ? Math.floor((e.minutes * 3 + 3) / 4) : e.minutes;
+  saveActive([...cur, { exp: e, start: now, end: now + mins * 60000, runner }]);
   S.setSet(B8, 'taken_' + epochDay(), [...(S.get(B8, 'taken_' + epochDay(), []) || []), e.id]);
   S.persist(); return null;
 }
@@ -196,7 +200,7 @@ export function claimExpedition(a) {
   S.setI(B8, 'completed', S.get(B8, 'completed', 0) + 1);
   const mult = S.get(B9, 'ee_' + evKey(a), 100);
   const xp = Math.floor(expXp(a.exp) * mult / 100); S.addXp(xp);
-  S.addEddies(Math.floor(expEddies(a.exp) * mult / 100));
+  let cash = Math.floor(expEddies(a.exp) * mult / 100); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2); S.addEddies(cash);
   addRep(DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length].id, 2);
   let chainEnd = false;
   const p = parseChain(a.exp.id);

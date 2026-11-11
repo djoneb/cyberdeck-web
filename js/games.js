@@ -2,6 +2,7 @@
 import * as S from './save.js';
 import * as Wd from './world.js';
 import { R, today, epochDay } from './krand.js';
+import { itemActive, chromeActive } from './social.js';
 
 export const GAMES = [
   ['breach', '⌗', 'Breach', 'matrice de codes', '+25 XP', 'var(--primary)'],
@@ -69,7 +70,9 @@ export function openGame(id, ctx) {
 
 // ═══════════════════════ BREACH PROTOCOL
 function breach(body, api, again) {
-  const CODES = ['1C', 'BD', '55', 'E9', '7A', 'FF'], N = 5, BUF = 6, LIMIT = 45;
+  const CODES = ['1C', 'BD', '55', 'E9', '7A', 'FF'], N = 5, BUF = 6;
+  // Puce Kairos (marché noir) +15 s, Accélérateur réflexe (cyberware) +10 s
+  const LIMIT = 45 + (itemActive('kairos') ? 15 : 0) + (chromeActive('reflex') ? 10 : 0);
   const grid = [...Array(N)].map(() => [...Array(N)].map(() => CODES[rnd(6)]));
   const path = []; let row = 0, col = rnd(N); path.push([row, col]); let vert = true;
   while (path.length < BUF) {
@@ -81,8 +84,8 @@ function breach(body, api, again) {
   const daemons = [seq.slice(1, 3), seq.slice(2, 5)].filter((d, i, a) => a.findIndex(x => x.join() === d.join()) === i);
   const has = (buf, d) => { for (let i = 0; i + d.length <= buf.length; i++) if (d.every((x, k) => buf[i + k] === x)) return true; return false; };
   let buffer = [], used = new Set(), isRow = true, line = 0, left = LIMIT, started = false, result = null;
-  api.sub('MATRICE DE CODES // 45 S');
-  body.innerHTML = `<div class="timer"><span class="mono dim">TEMPS</span><div class="tbar"><i></i></div><span class="mono" id="tl">45.0</span></div>
+  api.sub(`MATRICE DE CODES // ${LIMIT} S`);
+  body.innerHTML = `<div class="timer"><span class="mono dim">TEMPS</span><div class="tbar"><i></i></div><span class="mono" id="tl">${LIMIT.toFixed(1)}</span></div>
     <div class="mono dim small">TAMPON</div><div class="buffer"></div><div class="matrix"></div>
     <div class="mono dim small" style="margin-top:14px">DAEMONS À INJECTER</div><div class="daemons"></div><p class="dim hint">Choisis un code dans la ligne surlignée, puis dans la colonne, en alternant.</p>`;
   const render = () => {

@@ -30,15 +30,20 @@ class P:
                 if t[s.i]==')': s.i+=1; break
                 m2=re.match(r'([a-z][A-Za-z]*)\s*=(?!=)',t[s.i:])
                 if m2: s.i+=len(m2.group())
-                args.append(s.expr()); s.ws()
+                v=s.expr(); args.append(('named',m2.group(1),v) if m2 else v); s.ws()
                 if t[s.i]==',': s.i+=1
-            if name=='listOf': return args
+            if name in('listOf','setOf'): return args
             if name=='mapOf': return {k:v for _,k,v in args}
             return (name,args)
         return ('ident',name)
 def grab(f,marker):
     t=open(D+f).read(); i=t.index(marker)+len(marker); return P(t,i).expr()
-def obj(x,fields): return dict(zip(fields,x[1]))
+def obj(x,fields):
+    o={}; pos=[a for a in x[1] if not (isinstance(a,tuple) and a and a[0]=='named')]
+    o.update(zip(fields,pos))
+    for a in x[1]:
+        if isinstance(a,tuple) and a and a[0]=='named': o[a[1]]=a[2]
+    return o
 contacts=[obj(c,['id','name','role','emblem','gigs','romance','hello','offer','thanks','idle','close']) for c in grab('Contacts.kt','val CONTACTS = ')]
 gigs={k:obj(v,['event','desc','xp']) for k,v in grab('Contacts.kt','val TYPES = ').items()}
 exps=[obj(e,['id','contactId','title','place','minutes','brief','report']) for e in grab('Batch8.kt','val ALL = ')]
@@ -52,7 +57,19 @@ spots=[obj(d,['placeId','x','y','district','open','close']) for d in grab('Batch
 events=[obj(d,['text','safe','risky']) for d in grab('Batch9.kt','val POOL = ')]
 chains={k:[obj(e,['title','place','minutes','brief','report']) for e in v] for k,v in grab('Batch9.kt','val CHAINS: Map<String, List<ChainEp>> = ').items()}
 need=grab('Batch9.kt','val NEED = ')
-out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need}
+chromes=[obj(c,['id','name','desc','level']) for c in grab('Batch6.kt','object Chromes {\n    val ALL = ')]
+sms=grab('Batch6.kt','private val LINES = ')
+secrets=grab('Batch6.kt','val SECRETS = ')
+convos=[]
+for c in grab('Batch6.kt','object HoloConvos {\n    private fun c(me: String, reply: String, aff: Int, xp: Int) = ConvoChoice(me, reply, aff, xp)\n    val ALL = '):
+    o=obj(c,['id','contactId','text','choices']); o['choices']=[dict(zip(['me','reply','aff','xp'],x[1])) for x in o['choices']]; convos.append(o)
+dplaces=[obj(d,['id','name','desc','minutes','xp','bond']) for d in grab('Batch6.kt','object Romance {\n    val PLACES = ')]
+titles=grab('Batch6.kt','private val TITLES = ')
+dlines=grab('Batch6.kt','private val DATE_LINES = ')
+gifts=[obj(d,['id','name','desc']) for d in grab('Batch6.kt','val GIFTS = ')]
+items=[obj(d,['id','name','desc','price','consumable','kind']) for d in grab('Batch5.kt','object Eddies {\n    val ITEMS = ')]
+for it in items: it.setdefault('consumable',False); it.setdefault('kind','look')
+out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need,'CHROMES':chromes,'SMS_LINES':sms,'SECRETS':secrets,'CONVOS':convos,'DATE_PLACES':dplaces,'BOND_TITLES':titles,'DATE_LINES':dlines,'GIFTS_R':gifts,'ITEMS':items}
 with open(sys.argv[1],'w') as f:
     f.write('// Généré depuis le code du launcher (scripts/ktdata.py) : ne pas modifier à la main.\n')
     for k,v in out.items(): f.write(f'export const {k} = {json.dumps(v,ensure_ascii=False)};\n')
