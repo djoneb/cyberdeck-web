@@ -32,11 +32,12 @@ export function market(view, ctx) {
       <div class="chromebox"><div style="font-size:30px;font-weight:700;color:var(--info)">${S.eddies()} €$</div>
       <div class="dim small">Gagne des eddies : gigs, expéditions, rencontres en ville, infiltration… et sur le téléphone (missions, focus, contrats).</div>
       ${So.boostActive() ? '<div style="color:var(--secondary)">⚡ Stim XP active : XP doublée</div>' : ''}</div>
-      ${[['evolution', 'ÉVOLUTION NEURA'], ['look', 'APPARENCE'], ['fonction', 'FONCTIONS'], ['slot', 'EMPLACEMENTS CYBERWARE']].map(([k, label]) => `<div class="label">${label}</div>
+      ${[['evolution', 'ÉVOLUTION NEURA'], ['look', 'APPARENCE'], ['fonction', 'FONCTIONS'], ['identite', 'IDENTITÉ'], ['slot', 'EMPLACEMENTS CYBERWARE']].map(([k, label]) => `<div class="label">${label}</div>
         ${So.ITEMS.filter(i => i.kind === k).map(item => {
           const owned = !item.consumable && So.owned(item.id), on = owned && So.itemActive(item.id), lock = !owned && So.lockedReason(item);
           let act;
-          if (owned && (k === 'slot' || k === 'evolution')) act = '<span class="mono small" style="color:var(--info)">INSTALLÉ</span>';
+          if (k === 'identite') act = `<button class="btn ${S.eddies() >= item.price ? 'main' : ''}" data-id-edit="${item.id}">${item.price} €$</button>`;
+          else if (owned && (k === 'slot' || k === 'evolution')) act = '<span class="mono small" style="color:var(--info)">INSTALLÉ</span>';
           else if (lock) act = `<span title="${esc(lock)}">🔒</span>`;
           else if (owned && item.id.startsWith('pal_')) act = `<button class="btn ${webTheme === item.id ? 'main' : ''}" data-theme="${item.id}">${webTheme === item.id ? 'SUR LE SITE ✓' : 'APPLIQUER AU SITE'}</button>`;
           else if (owned) act = `<button class="btn ${on ? 'main' : ''}" data-eq="${item.id}">${on ? 'ÉQUIPÉ' : 'ÉQUIPER'}</button>`;
@@ -49,11 +50,32 @@ export function market(view, ctx) {
       const item = So.ITEMS.find(i => i.id === b.dataset.buy), err = So.buy(item);
       ctx.toast(err || `Transaction validée : ${item.name}`); ctx.changed(); paint();
     });
+    view.querySelectorAll('[data-id-edit]').forEach(b => b.onclick = () => identity(b.dataset.idEdit));
     view.querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { So.setEquipped(b.dataset.eq, !So.itemActive(b.dataset.eq)); paint(); });
     view.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
       try { if (localStorage.getItem(WEB_THEME_KEY) === b.dataset.theme) localStorage.removeItem(WEB_THEME_KEY); else localStorage.setItem(WEB_THEME_KEY, b.dataset.theme); } catch { /* indisponible */ }
       ctx.applyTheme(); paint();
     });
+  };
+  // Fenêtre de choix : nouveau nom ou nouveau genre, payé à la validation
+  const identity = (id) => {
+    const item = So.ITEMS.find(i => i.id === id);
+    if (S.eddies() < item.price) { ctx.toast(`Pas assez d'eddies (${S.eddies()} €$)`); return; }
+    let gender = S.pronoun();
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter" style="--c:var(--amber)"><div class="mono small" style="color:var(--amber)">${esc(item.name.toUpperCase())}</div><p>${esc(item.desc)}</p>
+      ${id === 'id_name' ? `<input id="idname" class="idinput" maxlength="24" value="${esc(S.name())}" aria-label="Nouveau nom">`
+        : [['il', '♂ IL'], ['elle', '♀ ELLE'], ['android', '⌬ ANDROÏDE']].map(([k, l]) => `<button class="echoice" data-g="${k}" aria-pressed="${k === gender}"><b>${l}${S.pronoun() === k ? '  (actuel)' : ''}</b></button>`).join('')}
+      <button class="btn main" id="idok">Payer ${item.price} €$ et valider</button><button class="btn" id="idno">Annuler</button>
+      <div class="dim small">Solde : ${S.eddies()} €$ · achetable autant de fois que tu veux.</div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { gender = b.dataset.g; ov.querySelectorAll('[data-g]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+    ov.querySelector('#idno').onclick = () => ov.remove();
+    ov.querySelector('#idok').onclick = () => {
+      const err = So.buyIdentity(id, id === 'id_name' ? ov.querySelector('#idname').value : gender);
+      if (err) { ctx.toast(err); return; }
+      ov.remove(); ctx.toast(id === 'id_name' ? 'Nouvelle identité enregistrée' : 'Identité reconfigurée'); ctx.changed(); paint();
+    };
   };
   paint();
 }

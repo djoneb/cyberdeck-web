@@ -140,6 +140,19 @@ export function buy(item) {
   S.persist(); return null;
 }
 
+/** Identité (faux papiers, genre) : payé à la validation, achetable plusieurs fois. */
+export function buyIdentity(itemId, value) {
+  const item = ITEMS.find(i => i.id === itemId); if (!item) return 'Objet inconnu';
+  const v = String(value || '').trim();
+  if (itemId === 'id_name' && (!v || v.length > 24)) return 'Choisis un nom de 1 à 24 caractères';
+  if (itemId === 'id_name' && v === S.name()) return 'C\'est déjà ton nom';
+  if (itemId === 'id_gender' && v === S.pronoun()) return 'C\'est déjà ton identité actuelle';
+  if (S.eddies() < item.price) return `Pas assez d'eddies (${S.eddies()} €$)`;
+  S.setI(B5, 'eddies', S.eddies() - item.price);
+  S.setS('cyberdeck', itemId === 'id_name' ? 'deckName' : 'pronoun', v); S.persist();
+  return null;
+}
+
 // ── Cyberware
 export const slots = () => 3 + ['slot_4', 'slot_5', 'slot_6'].filter(owned).length;
 export const equipped = () => String(S.get(B6, 'chrome', '') || '').split(',').filter(Boolean);

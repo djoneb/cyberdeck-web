@@ -373,3 +373,6 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .sharebox { width: min(560px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .sharebox img { width: 100%; max-height: 72vh; object-fit: contain; box-shadow: 0 0 40px rgba(0, 216, 240, .2); }
 .sharebox a.btn { text-decoration: none; }
+
+.idinput { width: 100%; background: #04080c; border: 1px solid var(--amber); color: var(--tx); font: 600 22px Rajdhani, sans-serif; padding: 10px 12px; }
+.echoice[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 18%, transparent); border-color: var(--c); }
