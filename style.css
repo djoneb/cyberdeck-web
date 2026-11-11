@@ -352,3 +352,9 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .grid .panel .btn { font-size: 17px; padding: 12px 20px; align-self: flex-start; }
 #qrzone .panel h3 { font-size: 26px; } #qrzone svg { width: min(420px, 80vw); height: auto; }
 @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .grid .panel { min-height: 0; } .grid .panel .pic { font-size: 40px; } }
+
+/* Crédit d'hébergement, en bas à droite */
+.hostedby { position: fixed; right: 14px; bottom: 10px; z-index: 40; color: #f4fbff; text-decoration: none; font: 11px "Share Tech Mono", monospace; letter-spacing: .22em;
+  text-shadow: -1px 0 rgba(255, 59, 78, .55), 1px 0 rgba(0, 216, 240, .55), 0 0 8px rgba(255, 255, 255, .35); opacity: .75; transition: opacity .2s; }
+.hostedby:hover { opacity: 1; text-shadow: -1px 0 rgba(255, 59, 78, .8), 1px 0 rgba(0, 216, 240, .8), 0 0 12px rgba(255, 255, 255, .6); }
+@media (max-width: 640px) { .hostedby { position: static; display: block; text-align: right; padding: 0 14px 14px; } }
