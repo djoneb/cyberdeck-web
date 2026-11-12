@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cyberdeck // Statistiques</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.st-hero { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 10px; }
+.st-k { position: relative; background: var(--panel); border: 1px solid var(--line); padding: 18px 18px 18px 26px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); }
+.st-k::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 0; width: 4px; background: var(--c, var(--cy)); }
+.st-k b { display: block; font-size: 64px; line-height: 1; color: var(--c, var(--cy)); font-variant-numeric: tabular-nums; }
+.st-k.big b { font-size: 96px; }
+.st-k span { font: 13px "Share Tech Mono", monospace; letter-spacing: .2em; color: var(--dim); }
+.st-chart { position: relative; background: var(--panel); border: 1px solid var(--line); padding: 18px 18px 10px; }
+.st-bars { display: flex; align-items: flex-end; gap: 4px; height: 200px; }
+.st-bars div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+.st-bars i { display: block; width: 100%; background: linear-gradient(var(--cy), rgba(0, 216, 240, .35)); min-height: 2px; }
+.st-bars i.c { background: linear-gradient(var(--info), rgba(245, 228, 0, .3)); }
+.st-bars em { font: 11px "Share Tech Mono"; color: var(--dim); font-style: normal; margin-top: 4px; white-space: nowrap; }
+.st-bars small { font: 12px "Share Tech Mono"; color: var(--tx); margin-bottom: 3px; }
+.st-kinds { display: flex; gap: 10px; flex-wrap: wrap; }
+.st-note { font-size: 15px; margin-top: 30px; max-width: 800px; }
+#st-err { color: var(--red); }
+@media (max-width: 900px) { .st-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); } .st-k b { font-size: 46px; } .st-k.big b { font-size: 64px; } .st-bars em { display: none; } }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="top">
+    <a class="brand" href="./"><b class="glitch">CYBERDECK</b><span class="mono">NC-OS // STATS</span></a>
+    <span class="mono dim" id="savestate">MISE À JOUR : —</span>
+    <a class="btn dlbtn" href="#" id="st-reload">⟳ ACTUALISER</a>
+  </header>
+
+  <div class="label">TÉLÉCHARGEMENTS DE L'APPLI</div>
+  <div class="st-hero">
+    <div class="st-k big"><b id="st-dev">—</b><span>APPAREILS DIFFÉRENTS</span></div>
+    <div class="st-k" style="--c:var(--info)"><b id="st-clk">—</b><span>CLICS AU TOTAL</span></div>
+    <div class="st-k" style="--c:var(--green)"><b id="st-today">—</b><span>NOUVEAUX AUJOURD'HUI</span></div>
+    <div class="st-k" style="--c:var(--violet)"><b id="st-gh">—</b><span>FICHIERS APK SERVIS (GITHUB)</span></div>
+  </div>
+
+  <div class="label">NOUVEAUX APPAREILS · 30 DERNIERS JOURS</div>
+  <div class="st-chart"><div class="st-bars" id="st-new"></div></div>
+
+  <div class="label">CLICS · 30 DERNIERS JOURS</div>
+  <div class="st-chart"><div class="st-bars" id="st-clicks"></div></div>
+
+  <div class="label">TYPES D'APPAREILS</div>
+  <div class="st-kinds" id="st-kinds"></div>
+
+  <p class="dim st-note" id="st-err"></p>
+  <p class="dim st-note">Un appareil est compté une seule fois, même s'il télécharge plusieurs fois : chaque navigateur reçoit un identifiant
+  aléatoire au premier clic sur « Télécharger ». Aucune adresse IP ni donnée personnelle n'est enregistrée. Un même téléphone peut être recompté
+  s'il change de navigateur ou efface ses données. Le compteur GitHub, lui, compte chaque fichier APK réellement servi, mises à jour
+  depuis l'appli comprises.</p>
+</div>
+<script type="module">
+import { RELAY } from './js/config.js';
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n || 0).toLocaleString('fr-BE');
+function bars(el, rows, cls) {
+  const map = Object.fromEntries((rows || []).map(r => [r.day, r.n]));
+  const days = [];
+  for (let i = 29; i >= 0; i--) days.push(new Date(Date.now() - i * 864e5).toISOString().slice(0, 10));
+  const max = Math.max(1, ...days.map(d => map[d] || 0));
+  el.innerHTML = days.map((d, i) => {
+    const n = map[d] || 0;
+    return `<div title="${d} : ${n}">${n ? `<small>${n}</small>` : ''}<i class="${cls}" style="height:${n / max * 85}%"></i><em>${i % 5 === 4 || i === 29 ? d.slice(8) + '/' + d.slice(5, 7) : ''}</em></div>`;
+  }).join('');
+}
+const KIND = { android: ['ANDROID', 'var(--green)'], ios: ['IPHONE / IPAD', 'var(--amber)'], pc: ['ORDINATEUR', 'var(--cy)'], autre: ['AUTRE', 'var(--dim)'] };
+async function load() {
+  $('st-err').textContent = '';
+  try {
+    const s = await (await fetch(RELAY + '/stats', { cache: 'no-store' })).json();
+    $('st-dev').textContent = fmt(s.devices);
+    $('st-clk').textContent = fmt(s.clicks);
+    $('st-today').textContent = fmt(s.today);
+    bars($('st-new'), s.newPerDay, '');
+    bars($('st-clicks'), s.clicksPerDay, 'c');
+    $('st-kinds').innerHTML = (s.kinds.length ? s.kinds : [{ kind: 'android', n: 0 }]).map(k => {
+      const [l, c] = KIND[k.kind] || KIND.autre;
+      return `<span class="chip" style="color:${c}">● ${l} · ${fmt(k.n)}</span>`;
+    }).join('');
+    $('savestate').textContent = 'MISE À JOUR : ' + new Date().toLocaleTimeString('fr-BE');
+  } catch (e) { $('st-err').textContent = 'Relais injoignable : ' + e.message; }
+  try {
+    const rel = await (await fetch('https://api.github.com/repos/djoneb/cyberdeck-releases/releases?per_page=100')).json();
+    let n = 0;
+    for (const r of rel) for (const a of r.assets || []) if (/\.apk$/i.test(a.name)) n += a.download_count;
+    $('st-gh').textContent = fmt(n);
+  } catch (e) { $('st-gh').textContent = '?'; }
+}
+$('st-reload').onclick = e => { e.preventDefault(); load(); };
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>

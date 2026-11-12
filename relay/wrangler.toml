@@ -7,6 +7,14 @@ workers_dev = true
 name = "BOX"
 class_name = "Box"
 
+[[durable_objects.bindings]]
+name = "STATS"
+class_name = "Stats"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Box"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Stats"]
