@@ -10,6 +10,7 @@ body {
     linear-gradient(rgba(0, 216, 240, .035) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(90deg, rgba(0, 216, 240, .035) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(#0b1720, #04080c);
+  background-attachment: fixed;
 }
 .mono { font-family: "Share Tech Mono", monospace; letter-spacing: .12em; }
 .dim { color: var(--dim); }
@@ -248,7 +249,7 @@ canvas.infil { width: min(420px, 100%); cursor: pointer; margin: 0 auto; }
 .top { gap: 10px; }
 /* menu sur sa propre ligne : 8 onglets */
 #nav { order: 3; flex: none; width: 100%; justify-content: flex-start; }
-.top > span:last-child { margin-left: auto; }
+#savestate { margin-left: auto; }
 
 /* ═══ Grand format : l'interface occupe tout l'écran, icônes et zones plus grandes */
 .frame { max-width: 1680px; padding: 18px 32px 60px; }
@@ -376,3 +377,11 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 
 .idinput { width: 100%; background: #04080c; border: 1px solid var(--amber); color: var(--tx); font: 600 22px Rajdhani, sans-serif; padding: 10px 12px; }
 .echoice[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 18%, transparent); border-color: var(--c); }
+
+/* Titre du site façon appli + bouton de téléchargement */
+.brand { display: flex; align-items: baseline; gap: 12px; text-decoration: none; color: var(--tx); }
+.brand b { font-size: 30px; letter-spacing: .14em; line-height: 1; }
+.brand b::before { content: "◢ "; color: var(--cy); text-shadow: none; }
+.brand span { color: var(--cy); font-size: 13px; border-left: 3px solid var(--secondary); padding-left: 10px; }
+.dlbtn { text-decoration: none; font-size: 16px; padding: 10px 18px; box-shadow: 0 0 18px rgba(0, 216, 240, .3); }
+@media (max-width: 640px) { .brand b { font-size: 24px; } .brand span { display: none; } .dlbtn { font-size: 14px; padding: 8px 12px; } }

@@ -1,0 +1,51 @@
+/* Page de téléchargement : même langage visuel que l'appli (biseaux, barres d'accent, glitch) */
+html, body { overflow-x: clip; }
+.top .home { text-decoration: none; }
+.dlhero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; padding: 40px 0 20px; }
+.dlid .label { margin-top: 0; color: var(--cy); }
+.dltitle { font-size: clamp(56px, 9vw, 120px); line-height: .9; letter-spacing: .04em; }
+.dlrank { font: 700 clamp(18px, 2.2vw, 26px) Rajdhani, sans-serif; color: var(--info); letter-spacing: .1em; margin-top: 10px; }
+.dllead { font-size: 20px; line-height: 1.45; max-width: 620px; }
+.door.dlmain { display: flex; flex-direction: column; gap: 4px; min-height: 0; max-width: 460px; margin: 22px 0 10px; text-decoration: none;
+  border-color: var(--cy); box-shadow: 0 0 28px rgba(0, 216, 240, .22); padding: 18px 20px 18px 28px;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
+.door.dlmain > i { width: 5px; }
+.door.dlmain .dic { font-size: 42px; height: 46px; }
+.door.dlmain b { font-size: 30px; color: var(--cy); }
+.door.dlmain:hover { background: rgba(0, 216, 240, .12); }
+
+.ph { position: relative; border: 1.5px solid rgba(0, 216, 240, .5); background: #03070a; padding: 6px; aspect-ratio: 390 / 844;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+.ph img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.dlstage { position: relative; height: 560px; }
+.dlstage .ph { position: absolute; width: 230px; top: 50%; left: 50%; box-shadow: 0 0 40px rgba(0, 216, 240, .2); }
+.dlstage .p1 { transform: translate(-125%, -46%) rotate(-7deg); opacity: .8; border-color: rgba(255, 10, 60, .6); }
+.dlstage .p3 { transform: translate(25%, -46%) rotate(7deg); opacity: .8; border-color: rgba(245, 228, 0, .55); }
+.dlstage .p2 { transform: translate(-50%, -52%); z-index: 2; width: 250px; }
+
+.dlgal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.dlgal figure { margin: 0; }
+.dlgal figcaption { display: flex; flex-direction: column; margin-top: 8px; border-left: 3px solid var(--cy); padding-left: 10px; }
+.dlgal figcaption b { font-size: 19px; letter-spacing: .08em; }
+.dlgal figcaption span { color: var(--dim); font-size: 15px; }
+.dlgal figure:nth-child(2) figcaption { border-color: var(--info); }
+.dlgal figure:nth-child(3) figcaption { border-color: var(--secondary); }
+.dlgal figure:nth-child(4) figcaption { border-color: var(--green); }
+.dlgal figure:nth-child(5) figcaption { border-color: var(--violet); }
+.dlfeat .door { cursor: default; }
+.dlfoot { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
+.dlfoot .btn { text-decoration: none; font-size: 18px; padding: 12px 22px; }
+
+@media (max-width: 1100px) { .dlgal { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .dlhero { grid-template-columns: 1fr; padding-top: 24px; }
+  .dlstage { height: 420px; }
+  .dlstage .ph { width: 165px; } .dlstage .p2 { width: 180px; }
+  .doors.dlfeat { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .dlgal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dlstage { height: 330px; } .dlstage .ph { width: 125px; } .dlstage .p2 { width: 140px; }
+  .doors.dlfeat { grid-template-columns: 1fr; }
+  .door.dlmain b { font-size: 24px; }
+}
