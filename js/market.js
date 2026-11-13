@@ -10,11 +10,19 @@ export const WEB_THEME_KEY = 'cyberdeck-web-theme';
 
 export function cyberware(view, ctx) {
   const paint = () => {
-    const eq = So.equipped(), slots = So.slots(), lv = ctx.level();
+    const crisis = So.psyTick(); if (crisis) { ctx.toast(crisis); ctx.changed(); }
+    const eq = So.equipped(), slots = So.slots(), lv = ctx.level(), over = eq.length >= 7, psy = So.psyPercent(), st = So.psyStage(psy);
+    const c7 = slots >= 7 && eq[6] ? So.CHROMES.find(x => x.id === eq[6]) : null;
     view.innerHTML = `<div class="sheethead"><h1 class="glitch" style="color:#b98cff">CYBERWARE</h1><div class="mono dim small">IMPLANTS · ${eq.length}/${slots} ÉQUIPÉS · NIVEAU ${lv}</div></div>
-      <div class="chromebox"><div class="mono small" style="color:var(--primary)">EMPLACEMENTS CYBERWARE // ${eq.length}/${slots}</div>
+      <div class="chromebox ${over ? 'overcharged' : ''}"><div class="mono small" style="color:${over ? 'var(--red)' : 'var(--primary)'}">EMPLACEMENTS CYBERWARE // ${eq.length}/${slots}</div>
       <div class="slots">${[0, 1, 2, 3, 4, 5].map(i => { const open = i < slots, c = open && eq[i] ? So.CHROMES.find(x => x.id === eq[i]) : null;
-        return `<button class="slot ${c ? 'on' : ''} ${open ? '' : 'locked'}" ${open ? '' : 'data-market'}>${!open ? '🔒 MARCHÉ' : c ? esc(c.name) : '— vide —'}</button>`; }).join('')}</div>
+        return `<button class="slot ${c ? 'on' : ''} ${open ? '' : 'locked'}" ${open ? '' : 'data-market'}>${!open ? '🔒 MARCHÉ' : c ? esc(c.name) : '— vide —'}</button>`; }).join('')}
+        <button class="slot slot7 ${c7 ? 'on' : ''} ${slots >= 7 ? '' : 'locked'}" ${slots >= 7 ? '' : 'data-market'}>${slots < 7 ? '🔒 7ᵉ EMPLACEMENT · SURCHARGE CHROMÉE (MARCHÉ)' : c7 ? '⚠ SURCHARGE · ' + esc(c7.name) : '— 7ᵉ emplacement · surcharge —'}</button></div>
+      ${slots >= 7 || psy > 0 ? `<div class="psy"><div class="psyhead"><span class="mono small dim">CHARGE NEURALE</span><b class="mono" style="color:${['var(--green)', 'var(--amber)', '#ff7a3c', 'var(--red)'][st]}">${psy} % · ${So.PSY_STAGES[st]}</b></div>
+        <div class="psybar"><i style="width:${psy}%"></i></div>
+        <div class="small" style="color:${over ? 'var(--red)' : 'var(--dim)'}">${So.psyBanned() ? `Crise récente : 7ᵉ emplacement bloqué encore ${So.psyBanLeft()}.`
+          : over ? 'Saturé de chrome : +20 % d\'XP sur tout. La charge monte de 4 % par heure ; à 100 %, crise de cyberpsychose (implants déconnectés, soins payants).'
+          : 'Sous 7 implants, ton système récupère : −6 % par heure.'}</div></div>` : ''}
       <div class="chromes">${So.CHROMES.map(c => { const on = eq.includes(c.id), locked = lv < c.level;
         return `<button class="chrome ${on ? 'on' : ''} ${locked ? 'locked' : ''}" data-c="${c.id}"><span class="check">${on ? '✓' : ''}</span>
           <span class="cm"><b>${esc(c.name)}</b><span class="dim small">${esc(c.desc)}</span></span><span class="mono tiny" style="color:${on ? 'var(--primary)' : 'var(--dim)'}">${locked ? '🔒 NIV ' + c.level : on ? 'ÉQUIPÉ' : ''}</span></button>`; }).join('')}</div></div>
@@ -32,7 +40,7 @@ export function market(view, ctx) {
       <div class="chromebox"><div style="font-size:30px;font-weight:700;color:var(--info)">${S.eddies()} €$</div>
       <div class="dim small">Gagne des eddies : gigs, expéditions, rencontres en ville, infiltration… et sur le téléphone (missions, focus, contrats).</div>
       ${So.boostActive() ? '<div style="color:var(--secondary)">⚡ Stim XP active : XP doublée</div>' : ''}</div>
-      ${[['evolution', 'ÉVOLUTION NEURA'], ['look', 'APPARENCE'], ['fonction', 'FONCTIONS'], ['identite', 'IDENTITÉ'], ['slot', 'EMPLACEMENTS CYBERWARE']].map(([k, label]) => `<div class="label">${label}</div>
+      ${[['evolution', 'ÉVOLUTION NEURA'], ['look', 'APPARENCE'], ['fonction', 'FONCTIONS'], ['identite', 'IDENTITÉ'], ['slot', 'CYBERWARE · EMPLACEMENTS & SOINS']].map(([k, label]) => `<div class="label">${label}</div>
         ${So.ITEMS.filter(i => i.kind === k).map(item => {
           const owned = !item.consumable && So.owned(item.id), on = owned && So.itemActive(item.id), lock = !owned && So.lockedReason(item);
           let act;

@@ -232,4 +232,6 @@ applyTheme();
 S.setXpHook((n) => { const c = Q.challenge('xp', n); if (c) toast(`Défi de la semaine réussi : « ${c.text} »`); });
 // Fin de rendez-vous : vérifiée régulièrement, même si on est sur une autre page.
 setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) { popup(r.title, r.text); ctx.changed(); } }, 15000);
+// Cyberpsychose : la charge neurale avance aussi pendant qu'on joue sur le site
+setInterval(() => { if (!S.hasSave()) return; const c = So.psyTick(); if (c) { popup('CYBERPSYCHOSE', c); ctx.changed(); } }, 30000);
 go((location.hash || '#profil').slice(1) || 'profil');

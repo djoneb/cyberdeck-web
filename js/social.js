@@ -128,13 +128,16 @@ export function lockedReason(item) {
   const i = EVO.indexOf(item.id); if (i > 0 && !owned(EVO[i - 1])) return `NEURA doit d'abord atteindre le stade ${i + 1}`;
   if (item.id === 'slot_5' && !owned('slot_4')) return 'Installe d\'abord l\'emplacement n°4';
   if (item.id === 'slot_6' && !owned('slot_5')) return 'Installe d\'abord l\'emplacement n°5';
+  if (item.id === 'slot_7' && !owned('slot_6')) return 'Installe d\'abord l\'emplacement n°6';
   return null;
 }
 export function buy(item) {
   if (!item.consumable && owned(item.id)) return 'Déjà acheté';
   const lk = lockedReason(item); if (lk) return lk;
+  if (item.id === 'immuno' && psyLevel() === 0 && !overcharged()) return 'Ton système nerveux est calme : inutile pour l\'instant';
   if (S.eddies() < item.price) return `Pas assez d'eddies (${S.eddies()} €$)`;
   S.setI(B5, 'eddies', S.eddies() - item.price);
+  if (item.id === 'immuno') { psyRelief(); S.persist(); return null; }
   if (item.id === 'boost_xp') S.setL(B5, 'boostUntil', Date.now() + 864e5); else S.setB(B5, 'own_' + item.id, true);
   if (item.id === 'neura_evo5') S.unlock('neura_ascend');
   S.persist(); return null;
@@ -154,7 +157,7 @@ export function buyIdentity(itemId, value) {
 }
 
 // ── Cyberware
-export const slots = () => 3 + ['slot_4', 'slot_5', 'slot_6'].filter(owned).length;
+export const slots = () => 3 + ['slot_4', 'slot_5', 'slot_6', 'slot_7'].filter(owned).length;
 export const equipped = () => String(S.get(B6, 'chrome', '') || '').split(',').filter(Boolean);
 export const chromeActive = (id) => equipped().includes(id);
 export function toggleChrome(id) {
@@ -164,8 +167,37 @@ export function toggleChrome(id) {
     const c = CHROMES.find(x => x.id === id);
     if (level() < c.level) return `Niveau ${c.level} requis`;
     const n = slots();
-    if (cur.length >= n) return n < 6 ? `Les ${n} emplacements sont occupés : achète-en un au marché noir ou retire un implant` : 'Les 6 emplacements sont occupés : retire d\'abord un implant';
+    if (cur.length >= 6 && psyBanned()) return `Ton système nerveux récupère de la crise : 7ᵉ emplacement bloqué encore ${psyBanLeft()}`;
+    if (cur.length >= n) return n < 7 ? `Les ${n} emplacements sont occupés : achète-en un au marché noir ou retire un implant` : 'Les 7 emplacements sont occupés : retire d\'abord un implant';
     cur.push(id);
   }
+  psyTick();
   S.setS(B6, 'chrome', cur.join(',')); S.persist(); return null;
 }
+
+// ── Cyberpsychose (mêmes règles que le téléphone) : charge en dixièmes de % (0..1000)
+export const overcharged = () => equipped().length >= 7;
+export const psyLevel = () => S.get(B6, 'psy', 0);
+export const psyPercent = () => Math.floor(psyLevel() / 10);
+export const psyBanned = () => S.get(B6, 'psyBan', 0) > Date.now();
+export function psyBanLeft() { const m = Math.max(1, Math.floor((S.get(B6, 'psyBan', 0) - Date.now()) / 60000)); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; }
+export const psyStage = (pct) => pct >= 80 ? 3 : pct >= 50 ? 2 : pct >= 20 ? 1 : 0;
+export const PSY_STAGES = ['STABLE', 'TENSION', 'INSTABLE', 'CRITIQUE'];
+/** Fait avancer la charge ; renvoie le message de crise si elle éclate. */
+export function psyTick(now = Date.now()) {
+  const at = S.get(B6, 'psyAt', 0); let lv = psyLevel(); const over = overcharged();
+  if (!at || (!over && lv === 0)) { S.setL(B6, 'psyAt', now); return null; }
+  const step = Math.floor(3600000 / (over ? 40 : 60)), n = Math.floor((now - at) / step);
+  if (n <= 0) return null;
+  lv = over ? Math.min(1000, lv + n) : Math.max(0, lv - n);
+  S.setI(B6, 'psy', lv); S.setL(B6, 'psyAt', (lv === 0 || lv === 1000) ? now : at + n * step);
+  if (over && lv >= 1000) {
+    const fee = Math.min(500, Math.floor(S.eddies() / 10));
+    S.setI(B5, 'eddies', S.eddies() - fee);
+    S.setS(B6, 'chrome', ''); S.setI(B6, 'psy', 400); S.setL(B6, 'psyAt', now); S.setL(B6, 'psyBan', now + 864e5);
+    S.setI(B6, 'psyCrises', S.get(B6, 'psyCrises', 0) + 1); S.persist();
+    return `CYBERPSYCHOSE // Trop de chrome. Ton système a disjoncté : implants déconnectés, ${fee} €$ de soins chez Trauma, 7ᵉ emplacement bloqué 24 h.`;
+  }
+  S.persist(); return null;
+}
+export function psyRelief() { psyTick(); S.setI(B6, 'psy', Math.max(0, psyLevel() - 400)); S.setL(B6, 'psyAt', Date.now()); }

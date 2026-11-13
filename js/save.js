@@ -41,6 +41,8 @@ export const raw = (f) => file(f);
 let xpHook = null;
 export function setXpHook(f) { xpHook = f; }
 export function addXp(n) {
+  // Surcharge chromée (7 implants) : +20 % d'XP, comme sur le téléphone.
+  if (n > 0 && String(get('cyberdeck_b6', 'chrome', '') || '').split(',').filter(Boolean).length >= 7) n = Math.floor(n * 12 / 10);
   // Stim XP (marché noir ou cadeau) : XP doublée pendant 24 h, comme sur le téléphone.
   if (n > 0 && get('cyberdeck_b5', 'boostUntil', 0) > Date.now()) n *= 2;
   if (n > 0 && xpHook) xpHook(n);

@@ -48,7 +48,9 @@ export function city(view, ctx, tab = 'map') {
   function map(body) {
     body.innerHTML = `<p class="dim small">Choisis un lieu. On y croise des contacts, des inconnus… et des runners avec des contrats.</p>
       <div class="map"><canvas></canvas><div class="maplabels"></div>
-      <span class="mono tiny maptag" style="left:8px;color:${Wd.isNight() ? '#b98cff' : C.amber}">${Wd.isNight() ? '☾ NUIT · récompenses +25 %' : '☀ JOUR'}</span>
+      ${(() => { const ph = Wd.phase(), we = Wd.weather(), pb = Wd.phaseBonus(ph), wb = Wd.WEATHER_BONUS[we];
+        return `<span class="mono tiny maptag skytag" style="left:8px"><span style="color:${['#ffb07a', C.amber, '#ff7a5a', '#b98cff'][ph]}">${['◒', '☀', '◓', '☾'][ph]} ${Wd.PHASES[ph]}${pb ? ' · +' + pb + ' %' : ''}</span>
+          <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''}</span></span>`; })()}
       <span class="mono tiny maptag" style="right:8px;color:${C.amber}">● contact sur place</span></div>
       <div id="expreminder"></div><div class="reps"></div><p class="dim small" id="reptxt"></p>
       <div class="mono dim small" style="margin:16px 0 6px">LIEUX · ${Wd.visits()} VISITE(S)</div><div class="places"></div>`;
@@ -81,26 +83,36 @@ export function city(view, ctx, tab = 'map') {
     const items = [...towers(), ...spots.map(sp => { const lm = LANDMARKS[sp.placeId] || [0.05, 0.05, 'sign']; return { u: sp.x, v: sp.y, s: lm[0], h: lm[1], neon: Wd.place(sp.placeId).color, seed: hashCode(sp.placeId), spot: sp.placeId }; })]
       .sort((a, b) => (a.u + a.v) - (b.u + b.v));
     const frame = (ms) => {
-      const t = ms / 1000, night = Wd.isNight(), now = Date.now();
+      const t = ms / 1000, phase = Wd.phase(), weather = Wd.weather(), night = phase === 3, now = Date.now(), clear = weather === 0;
       const P = (u, v, z = 0) => proj(W, H, u, v, z);
       const quad = (pts, fill, stroke, lw = 1) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } };
       const line = (a, b, col, lw, dash) => { g.strokeStyle = col; g.lineWidth = lw; if (dash) { g.setLineDash(dash[0]); g.lineDashOffset = dash[1]; } g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.setLineDash([]); };
       const circle = (p, r, col, stroke) => { g.beginPath(); g.arc(p[0], p[1], r, 0, 7); if (stroke) { g.strokeStyle = col; g.lineWidth = stroke; g.stroke(); } else { g.fillStyle = col; g.fill(); } };
-      // ciel
-      const sky = g.createLinearGradient(0, 0, 0, H);
-      if (night) { sky.addColorStop(0, '#0a0418'); sky.addColorStop(1, '#03090e'); } else { sky.addColorStop(0, '#3e86c4'); sky.addColorStop(0.5, '#123050'); sky.addColorStop(1, '#07131c'); }
+      // ciel : cycle du soleil (lever, après-midi, soirée, nuit), assombri ou ensablé selon la météo
+      const mix = (hex, to, k) => { const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16), c = (sh) => Math.round(((a >> sh) & 255) * (1 - k) + ((b >> sh) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
+      const tint = (hex) => weather === 1 ? mix(hex, '#1c2630', 0.4) : weather === 2 ? mix(hex, '#1c2630', 0.6) : weather === 3 ? mix(hex, '#b7792f', 0.45) : hex;
+      const cols = [['#f29e6b', '#6a4c93', '#0e1e33'], ['#3e86c4', '#123050', '#07131c'], ['#ff6b3d', '#7a2c5e', '#140a26'], ['#0a0418', '#03090e']][phase].map(tint);
+      const sky = g.createLinearGradient(0, 0, 0, H); cols.forEach((c, k) => sky.addColorStop(k / (cols.length - 1), c));
       g.fillStyle = sky; g.fillRect(0, 0, W, H);
-      if (night) {
+      if (phase === 3) {
         const gl = g.createLinearGradient(0, 0, 0, H * 0.35); gl.addColorStop(0, 'rgba(42,11,58,.6)'); gl.addColorStop(1, 'rgba(42,11,58,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H * 0.35);
-        for (let k = 0; k < 30; k++) { const rr = RInt(k * 7); const a = 0.2 + rr.nextFloat() * 0.3; circle([rr.nextFloat() * W, rr.nextFloat() * H * 0.25], 1.2, `rgba(255,255,255,${a})`); }
+        if (clear) { for (let k = 0; k < 30; k++) { const rr = RInt(k * 7); const a = 0.2 + rr.nextFloat() * 0.3; circle([rr.nextFloat() * W, rr.nextFloat() * H * 0.25], 1.2, `rgba(255,255,255,${a})`); }
+          circle([W * 0.18, H * 0.08], SW * 0.03, 'rgba(232,240,255,.8)'); }
+      } else if (phase !== 1) {
+        const sx = phase === 0 ? W * 0.16 : W * 0.84, sy = phase === 0 ? H * 0.17 : H * 0.19, sc = phase === 0 ? '#ffc27a' : '#ff5a36';
+        const sun = g.createRadialGradient(sx, sy, 0, sx, sy, SW * 0.24); sun.addColorStop(0, rgba(sc, clear ? 0.85 : 0.35)); sun.addColorStop(1, rgba(sc, 0));
+        g.fillStyle = sun; g.fillRect(sx - SW * 0.24, sy - SW * 0.24, SW * 0.48, SW * 0.48);
+        if (clear) circle([sx, sy], SW * 0.04, sc);
+        for (let k = 0; k < 4; k++) { const rr = RInt(k * 29); const cy = H * (0.05 + rr.nextFloat() * 0.14), cx = ((rr.nextFloat() + t * 0.003) % 1) * W;
+          g.fillStyle = rgba(phase === 0 ? '#ffb0c8' : '#ff8a5c', 0.22); g.beginPath(); g.ellipse(cx, cy + H * 0.009, W * 0.1, H * 0.009, 0, 0, 7); g.fill(); }
       } else {
         const gl = g.createLinearGradient(0, 0, 0, H * 0.4); gl.addColorStop(0, 'rgba(143,211,255,.55)'); gl.addColorStop(1, 'rgba(143,211,255,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H * 0.4);
-        const sun = g.createRadialGradient(W * 0.82, H * 0.08, 0, W * 0.82, H * 0.08, W * 0.14); sun.addColorStop(0, 'rgba(255,244,192,.7)'); sun.addColorStop(1, 'rgba(255,244,192,0)');
+        const sun = g.createRadialGradient(W * 0.82, H * 0.08, 0, W * 0.82, H * 0.08, W * 0.14); sun.addColorStop(0, `rgba(255,244,192,${clear ? 0.7 : 0.3})`); sun.addColorStop(1, 'rgba(255,244,192,0)');
         g.fillStyle = sun; g.fillRect(W * 0.6, 0, W * 0.4, H * 0.3);
         for (let k = 0; k < 5; k++) { const rr = RInt(k * 13); const cx = ((rr.nextFloat() + t * 0.004 * (1 + k % 2)) % 1) * W, cy = H * (0.04 + rr.nextFloat() * 0.16);
           g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(cx, cy, W * 0.08, H * 0.012, 0, 0, 7); g.fill(); }
       }
-      quad([P(0, 0), P(1, 0), P(1, 1), P(0, 1)], night ? '#07131c' : '#15324a');
+      quad([P(0, 0), P(1, 0), P(1, 1), P(0, 1)], ((c) => weather === 3 ? mix(c, '#5a3a1a', 0.35) : c)(['#1a2438', '#15324a', '#1c1430', '#07131c'][phase]));
       Wd.DISTRICTS.forEach(d => {
         const pts = spots.filter(s => s.district === d.id); if (!pts.length) return;
         const c = P(pts.reduce((a, s) => a + s.x, 0) / pts.length, pts.reduce((a, s) => a + s.y, 0) / pts.length);
@@ -145,6 +157,27 @@ export function city(view, ctx, tab = 'map') {
         else if (style === 'sign') { g.fillStyle = rgba(glow, 0.6 + 0.4 * pulse); g.fillRect(top[0] - 12, top[1] - 12, 24, 7); }
         if (b.spot) { circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * pulse)); Wd.present(b.spot).forEach((_, k) => circle([top[0] + 14 + k * 9, top[1] - 20], 4, C.amber)); }
         else if (b.h > 0.2) line(P(b.u - s, b.v + s, z), P(b.u + s, b.v + s, z), rgba(b.neon, 0.7), 2);
+      }
+      // météo par-dessus la ville
+      if (weather === 1 || weather === 2) {
+        const heavy = weather === 2;
+        g.fillStyle = `rgba(10,20,32,${heavy ? 0.28 : 0.15})`; g.fillRect(0, 0, W, H);
+        g.lineWidth = 1.2;
+        for (let k = 0; k < (heavy ? 140 : 80); k++) {
+          const rr = RInt(k * 61), sp = 0.6 + rr.nextFloat() * 0.8, y = ((rr.nextFloat() + t * sp * (heavy ? 0.9 : 0.6)) % 1) * (H + 60) - 30, x = rr.nextFloat() * W + y * (heavy ? 0.25 : 0.1);
+          g.strokeStyle = rgba(heavy ? '#bfd8ff' : '#7cf2c8', 0.25 + rr.nextFloat() * 0.25); g.beginPath(); g.moveTo(x, y); g.lineTo(x - (heavy ? 7 : 3), y - 18 * sp); g.stroke();
+        }
+        if (heavy) { const cyc = t % 7; if (cyc < 0.25) {
+          g.fillStyle = `rgba(255,255,255,${(0.25 - cyc) * 1.6})`; g.fillRect(0, 0, W, H);
+          const rr = RInt(Math.floor(t / 7)); let p0 = [W * (0.2 + rr.nextFloat() * 0.6), 0];
+          for (let k = 0; k < 6; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.12, p0[1] + H * 0.07]; line(p0, p1, '#eaf4ff', 2.5); p0 = p1; } } }
+      } else if (weather === 3) {
+        const sd = g.createLinearGradient(0, 0, 0, H); sd.addColorStop(0, 'rgba(201,138,60,.35)'); sd.addColorStop(1, 'rgba(138,90,43,.25)'); g.fillStyle = sd; g.fillRect(0, 0, W, H);
+        g.lineWidth = 1.4;
+        for (let k = 0; k < 120; k++) {
+          const rr = RInt(k * 43), sp = 0.5 + rr.nextFloat(), x = ((rr.nextFloat() + t * sp * 0.35) % 1) * (W + 40) - 20, y = rr.nextFloat() * H + Math.sin(t * 2 + k) * 6;
+          g.strokeStyle = rgba('#f2c27b', 0.25 + rr.nextFloat() * 0.3); g.beginPath(); g.moveTo(x, y); g.lineTo(x - 10 * sp, y + 1); g.stroke();
+        }
       }
       const a = Wd.active()[0];
       if (a) {

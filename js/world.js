@@ -1,6 +1,6 @@
 // Règles du monde (mêmes clés et mêmes formules que le launcher) : gigs, affinité, ville, expéditions.
 import * as S from './save.js';
-import { R, hashCode, today, epochDay } from './krand.js';
+import { R, KRandom, hashCode, today, epochDay } from './krand.js';
 import { chromeActive, itemActive } from './social.js';
 import * as Q from './quests.js';
 import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED } from './gamedata.js';
@@ -72,7 +72,19 @@ export function isOpen(s, h = hour()) {
   if (s.open === 0 && s.close === 24) return true;
   return s.open < s.close ? (h >= s.open && h < s.close) : (h >= s.open || h < s.close);
 }
-export const isNight = (h = hour()) => h >= 20 || h < 8;
+/** Cycle du soleil : 0 lever (6–12 h), 1 après-midi (12–18 h), 2 soirée (18–22 h), 3 nuit (22–6 h). */
+export const phase = (h = hour()) => h >= 6 && h < 12 ? 0 : h >= 12 && h < 18 ? 1 : h >= 18 && h < 22 ? 2 : 3;
+export const PHASES = ['LEVER DU SOLEIL', 'APRÈS-MIDI', 'SOIRÉE', 'NUIT'];
+export const isNight = (h = hour()) => phase(h) === 3;
+export const phaseBonus = (p = phase()) => p === 2 ? 10 : p === 3 ? 25 : 0;
+/** Météo : change toutes les 4 heures, même tirage que le téléphone (Random(Int)). 0 clair, 1 pluie acide, 2 orage, 3 sable. */
+export function weather(day = epochDay(), h = hour()) {
+  const r = new KRandom(day * 6 + Math.floor(h / 4), true).nextIntUntil(100);
+  return r < 40 ? 0 : r < 70 ? 1 : r < 85 ? 2 : 3;
+}
+export const WEATHERS = ['CIEL CLAIR', 'PLUIE ACIDE', 'ORAGE', 'TEMPÊTE DE SABLE'];
+export const WEATHER_ICONS = ['☀', '☂', 'ϟ', '≋'];
+export const WEATHER_BONUS = [0, 10, 20, 15];
 export const hoursLabel = (s) => (s.open === 0 && s.close === 24) ? '24/7' : `${String(s.open).padStart(2, '0')}h–${String(s.close % 24).padStart(2, '0')}h`;
 export const rep = (d) => S.get(B9, 'rep_' + d, 0);
 export function addRep(d, n) { S.setI(B9, 'rep_' + d, rep(d) + n); }
@@ -137,6 +149,8 @@ export function choose(placeId, e, idx) {
   const sp = spot(placeId);
   let mult = 100;
   if (isNight()) mult = Math.floor(mult * 125 / 100);
+  else if (phase() === 2) mult = Math.floor(mult * 110 / 100);
+  mult = Math.floor(mult * (100 + WEATHER_BONUS[weather()]) / 100);
   if (placeId === 'bunker') mult = Math.floor(mult * 150 / 100);
   if (sp) { mult = Math.floor(mult * (100 + 10 * tier(rep(sp.district))) / 100); addRep(sp.district, ch.xp >= 20 ? 2 : 1); }
   const cash = ch.eddies > 0 ? Math.floor(ch.eddies * mult / 100) : ch.eddies;
