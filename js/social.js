@@ -201,7 +201,7 @@ export function psyTick(now = Date.now()) {
   S.setI(B6, 'psy', lv); S.setL(B6, 'psyAt', (lv === 0 || lv === 1000) ? now : at + n * step);
   if (over && lv >= 1000) {
     const fee = Math.min(500, Math.floor(S.eddies() / 10));
-    S.setI(B5, 'eddies', S.eddies() - fee);
+    S.setI(B5, 'eddies', S.eddies() - fee); { const t = new Date(), k = `jc_${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; S.setI('cyberdeck_b9', k, S.get('cyberdeck_b9', k, 0) + 1); }
     S.setS(B6, 'chrome', ''); S.setI(B6, 'psy', 400); S.setL(B6, 'psyAt', now); S.setL(B6, 'psyBan', now + 864e5);
     S.setI(B6, 'psyCrises', S.get(B6, 'psyCrises', 0) + 1); S.persist();
     return `CYBERPSYCHOSE // Trop de chrome. Ton système a disjoncté : implants déconnectés, ${fee} €$ de soins chez Trauma, 7ᵉ emplacement bloqué 24 h.`;

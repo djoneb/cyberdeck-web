@@ -10,6 +10,7 @@ const FAMILIES = {
   reputation: { name: 'RÉPUTATION', hex: '#8fb7ff', txt: '3 cartes par quartier : à 10, 25 puis 50 points de réputation.' },
   contrat: { name: 'CONTRATS', hex: '#ffd27a', txt: 'Une carte par contrat et par histoire : répéter le contrat, réussir un imprévu risqué, finir l\'histoire.' },
   secret: { name: 'SECRÈTES', hex: '#f4fbff', txt: 'Aucun indice. Une réponse, un événement ou une rencontre précise les fait tomber.' },
+  dossier: { name: 'DOSSIERS', hex: '#6ff3f0', txt: 'Une carte par contact : compléter son dossier du holophone à 100 %.' },
 };
 const TIERS = [[20, 'common', 'Contact', 20, 0], [40, 'rare', 'Allié·e', 50, 0], [60, 'epic', 'Ami·e', 100, 30], [80, 'leg', 'Confident·e', 200, 80], [100, 'myth', 'Proche', 400, 150]];
 const FRIEND_TITLES = {
@@ -96,6 +97,12 @@ DATA.e.forEach((e) => {
 DATA.ch.forEach((ch) => CARDS.push({ id: 'h_' + ch.c, fam: 'contrat', rar: 'myth', art: 'glyph', glyph: 'chain_' + ch.c, title: CHAIN_NAMES[ch.c], tag: '3 ÉPISODES', place: 'Histoire de contact',
   contact: ch.c, quote: ch.last, serial: `HIS-${ABBR[ch.c]}`, cond: `Terminer les 3 épisodes de l'histoire de ${DATA.c[ch.c]?.name || ''}.`, reward: rw(500, 0, 'carte animée'), eps: ch.eps,
   rule: { t: 'int', f: 'cyberdeck_b9', k: 'chain_' + ch.c, v: 3 } }));
+Object.keys(FRIEND_TITLES).forEach((cid) => {
+  const ct = DATA.c[cid]; if (!ct) return;
+  CARDS.push({ id: `d_${cid}`, fam: 'dossier', rar: 'leg', art: 'portrait', tier: 2, contact: cid, title: `${ct.name} · Dossier complet`, tag: 'DOSSIER 100 %',
+    quote: (DATA.dos && DATA.dos[cid]) || ct.close[0], serial: `DOS-${ABBR[cid]}`, cond: `Compléter le dossier de ${ct.name} à 100 % (holophone › Dossiers).`, reward: rw(300, 150),
+    rule: { t: 'bool', f: 'cyberdeck_b6', k: 'doss_' + cid } });
+});
 SECRETS.forEach(([id, title, quote, cond, rule], n) => CARDS.push({ id, fam: 'secret', rar: 'secret', art: 'glyph', glyph: id === 's_coffee' ? 'ivana_source' : id, title, tag: 'SECRÈTE', quote,
   serial: `SEC-${String(n + 1).padStart(2, '0')}`, cond, reward: rw(250, 100), secret: true, rule }));
 CARDS.forEach((c, i) => { c.no = i + 1; });

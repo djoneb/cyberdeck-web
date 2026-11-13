@@ -3,6 +3,7 @@ import * as S from './save.js';
 import * as Wd from './world.js';
 import { RInt, hashCode } from './krand.js';
 import { portraitCanvas } from './portrait.js';
+import { DOSSIERS } from './gamedata.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/\n/g, '<br>');
 const C = { red: '#e8505b', cyan: '#6ff3f0', amber: '#f6b35c', green: '#7cf29a', dim: '#7f9aa2', primary: '#ff3b4e' };
@@ -50,7 +51,7 @@ export function city(view, ctx, tab = 'map') {
       <div class="map"><canvas></canvas><div class="maplabels"></div>
       ${(() => { const ph = Wd.phase(), we = Wd.weather(), pb = Wd.phaseBonus(ph), wb = Wd.WEATHER_BONUS[we];
         return `<span class="mono tiny maptag skytag" style="left:8px"><span style="color:${['#ffb07a', C.amber, '#ff7a5a', '#b98cff'][ph]}">${['◒', '☀', '◓', '☾'][ph]} ${Wd.PHASES[ph]}${pb ? ' · +' + pb + ' %' : ''}</span>
-          <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''}</span></span>`; })()}
+          <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''}</span>${we ? `<span style="color:${C.dim}">${Wd.WEATHER_FX[we]}</span>` : ''}</span>`; })()}
       <span class="mono tiny maptag" style="right:8px;color:${C.amber}">● contact sur place</span></div>
       <div id="expreminder"></div><div class="reps"></div><p class="dim small" id="reptxt"></p>
       <div class="mono dim small" style="margin:16px 0 6px">LIEUX · ${Wd.visits()} VISITE(S)</div><div class="places"></div>`;
@@ -201,10 +202,29 @@ export function city(view, ctx, tab = 'map') {
     body.querySelector('#reptxt').textContent = Wd.bunkerUnlocked() ? '☢ Le Bunker Zéro t\'est ouvert : récompenses +50 %.' : `Réputation totale ${Wd.totalRep()}/40 : un lieu secret attend les légendes…`;
     body.querySelector('.places').innerHTML = Wd.PLACES.filter(p => p.id !== 'bunker' || bunker).map(pl => {
       const sp = Wd.spot(pl.id), open = !sp || Wd.isOpen(sp), left = Wd.cooldownLeft(pl.id);
-      return `<button class="place ${left > 0 || !open ? 'cool' : ''}" data-p="${pl.id}" style="--c:${pl.color}"><span class="pic">${pl.icon}</span><b>${esc(pl.name)}</b><span class="dim tiny">${esc(pl.desc)}</span>
+      return `<button class="place ${left > 0 || !open ? 'cool' : ''}" data-p="${pl.id}" style="--c:${pl.color}"><span class="pfile mono tiny" data-file="${pl.id}">▤ FICHE</span><span class="pic">${pl.icon}</span><b>${esc(pl.name)}</b><span class="dim tiny">${esc(pl.desc)}</span>
         <em class="mono tiny" style="color:${!open ? C.red : left > 0 ? C.dim : pl.color}">${!open ? 'FERMÉ · ' + Wd.hoursLabel(sp) : left > 0 ? '↻ ' + Wd.fmtLeft(left) : 'ENTRER ›'}</em></button>`;
     }).join('');
-    body.querySelectorAll('.place').forEach(b => b.onclick = () => go(b.dataset.p));
+    body.querySelectorAll('.place').forEach(b => b.onclick = (ev) => { const f = ev.target.closest('[data-file]'); if (f) placeFile(f.dataset.file); else go(b.dataset.p); });
+  }
+
+  // Fiche d'un lieu (wiki) : se complète avec tes passages et la réputation du quartier (mêmes règles que l'appli)
+  function placeFile(id) {
+    const pl = Wd.place(id), d = DOSSIERS.lieux?.[id]; if (!pl || !d) return;
+    const L = DOSSIERS.lieuxNiveaux, met = S.get('cyberdeck_b8', 'met_' + id, 0), sp = Wd.spot(id), rep = sp ? Wd.rep(sp.district) : 0;
+    const at = (k, label, text) => ({ label, text: met >= L[k] ? text : null, how: `${L[k]} passage${L[k] > 1 ? 's' : ''} ici` });
+    const lines = [{ label: 'Quartier', text: d.quartier }, at('ambiance', 'Ambiance', d.ambiance), at('hist1', 'Les origines', d.hist[0]), at('hist2', 'Les habitués', d.hist[1]),
+      at('hist3', 'Ce qu\'on raconte', d.hist[2]), { label: 'Secret du lieu', text: rep >= L.secretRep ? d.secret : null, how: `${L.secretRep} de réputation dans le quartier` }];
+    const pct = Math.floor(lines.filter(l => l.text).length * 100 / lines.length);
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter" style="--c:${pl.color}"><div class="mono small" style="color:${pl.color}">${pl.icon}  ${esc(pl.name.toUpperCase())}</div>
+      <div class="mono tiny" style="color:${pl.color}">Fiche complétée à ${pct} % · ${met} passage(s)</div>
+      ${lines.map(l => `<div class="dline ${l.text ? '' : 'lock'}"><div class="mono tiny" style="color:${l.text ? pl.color : C.dim}">${esc(l.label.toUpperCase())}</div>
+        ${l.text ? `<div>${esc(l.text)}</div>` : `<div><span class="redact">█████ ███ ████</span> <span class="mono tiny dim">🔒 ${esc(l.how)}</span></div>`}</div>`).join('')}
+      <button class="btn" id="pfclose">Fermer</button></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector('#pfclose').onclick = close; ov.onclick = (e) => { if (e.target === ov) close(); };
   }
 
   function go(id) {

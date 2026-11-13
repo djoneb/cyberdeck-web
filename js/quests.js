@@ -68,7 +68,7 @@ export const secretFound = (id) => S.get(B7, 'secret_' + id, false);
 export const gamesToday = () => S.get('cyberdeck_b9', 'games_' + today(), 0);
 export function addGame() { S.setI('cyberdeck_b9', 'games_' + today(), gamesToday() + 1); S.persist(); }
 export function rivalPending() {
-  return R(epochDay() * 131 + 7).nextIntUntil(3) === 0 && new Date().getHours() >= 14 && S.get('cyberdeck_b9', 'rival_' + today(), null) === null;
+  return (R(epochDay() * 131 + 7).nextIntUntil(3) === 0 || S.get('cyberdeck_b6', 'psy', 0) >= 500) && new Date().getHours() >= 14 && S.get('cyberdeck_b9', 'rival_' + today(), null) === null;
 }
 export function streakNow() { const last = S.get('cyberdeck_b9', 'streak_last', -1); return last >= epochDay() - 1 ? S.get('cyberdeck_b9', 'streak', 0) : 0; }
 export function feeling() {

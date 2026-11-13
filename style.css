@@ -419,3 +419,12 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .dline > div:last-child { font-size: 17px; line-height: 1.4; }
 .redact { color: rgba(127, 154, 162, .45); letter-spacing: -1px; }
 .btn.dcall { display: inline-flex; align-items: center; gap: 8px; }
+/* Carnet de NEURA */
+.neuralog { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); margin-bottom: 12px; }
+.logday { background: rgba(255, 255, 255, .03); border: 1px solid rgba(111, 243, 255, .3); padding: 12px 14px; }
+.logday.today { border-color: var(--primary); }
+.logday .mono { color: #6ff3ff; display: flex; justify-content: space-between; }
+.logday p { margin: 6px 0 0; font-size: 17px; }
+/* Fiches des lieux */
+.place { position: relative; } .pfile { position: absolute; top: 8px; right: 8px; color: var(--c); background: rgba(3, 9, 14, .7); padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
+.pfile:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }

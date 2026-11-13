@@ -8,6 +8,33 @@ import { DOSSIERS } from './gamedata.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
 
+export function sections(id) {
+  const d = DOSSIERS.contacts[id]; if (!d) return [];
+  const L = DOSSIERS.levels, aff = Wd.affinity(id);
+  const at = (k, label, text) => ({ label, text: aff >= L[k] ? text : null, how: `Affinité ${L[k]}` });
+  const out = [
+    { title: 'FICHE', lines: [at('fiche', 'Surnom', d.alias), at('fiche', 'Âge', d.age), at('fiche', 'Où le·la trouver', d.lieu), at('fiche', 'Activité', d.metier),
+      at('traits', 'Signe particulier', d.signe), at('traits', 'Citation', `« ${d.citation} »`)] },
+    { title: 'BIOGRAPHIE', lines: [at('bio1', 'Qui c\'est', d.bio[0]), at('bio2', 'Son passé', d.bio[1]), at('bio3', 'Sa vie aujourd\'hui', d.bio[2])] },
+    { title: 'PERSONNALITÉ', lines: [at('gouts', 'Aime', d.aime), at('gouts', 'Déteste', d.deteste)] },
+    { title: 'DOSSIER PIRATÉ', lines: [{ label: 'Secret', text: So.hackUnlocked(id) ? So.SECRETS[id] : null, how: 'Pirate son dossier depuis le holophone' }] },
+  ];
+  const eps = Wd.CHAINS[id];
+  if (eps) { const done = Wd.chainProgress(id);
+    out.push({ title: 'SON HISTOIRE', lines: eps.map((ep, i) => ({ label: `Épisode ${i + 1} · ${ep.title}`, text: i < done ? ep.report : null, how: `Affinité ${Wd.CHAIN_NEED[i]}, puis l'expédition « ${ep.title} »` })) }); }
+  out.push({ title: 'CE QU\'IL·ELLE PENSE DE TOI', lines: [at('toi', 'Confidence', d.toi)] });
+  return out;
+}
+export const completion = (secs) => { const l = secs.flatMap(s => s.lines); return l.length ? Math.floor(l.filter(x => x.text).length * 100 / l.length) : 0; };
+
+/** Dossiers complets à 100 % : marqués une fois (carte holo « Dossier complet »). Renvoie les nouveaux. */
+export function checkDossiers() {
+  const fresh = Wd.CONTACTS.map(c => c.id).filter(id => !S.get('cyberdeck_b6', 'doss_' + id, false) && completion(sections(id)) >= 100);
+  fresh.forEach(id => S.setB('cyberdeck_b6', 'doss_' + id, true));
+  if (fresh.length) S.persist();
+  return fresh;
+}
+
 export function holophone(view, ctx, callId = null) {
   let timers = [], glitchT = null, tab = callId === 'sms' ? 'sms' : 'contacts';
   const clear = () => { timers.forEach(clearTimeout); timers = []; clearInterval(glitchT); };
@@ -62,24 +89,6 @@ export function holophone(view, ctx, callId = null) {
   }
 
   // ─────────────── Dossiers : le wiki de chaque contact, qui se complète au fil du jeu (mêmes règles que l'appli)
-  function sections(id) {
-    const d = DOSSIERS.contacts[id]; if (!d) return [];
-    const L = DOSSIERS.levels, aff = Wd.affinity(id);
-    const at = (k, label, text) => ({ label, text: aff >= L[k] ? text : null, how: `Affinité ${L[k]}` });
-    const out = [
-      { title: 'FICHE', lines: [at('fiche', 'Surnom', d.alias), at('fiche', 'Âge', d.age), at('fiche', 'Où le·la trouver', d.lieu), at('fiche', 'Activité', d.metier),
-        at('traits', 'Signe particulier', d.signe), at('traits', 'Citation', `« ${d.citation} »`)] },
-      { title: 'BIOGRAPHIE', lines: [at('bio1', 'Qui c\'est', d.bio[0]), at('bio2', 'Son passé', d.bio[1]), at('bio3', 'Sa vie aujourd\'hui', d.bio[2])] },
-      { title: 'PERSONNALITÉ', lines: [at('gouts', 'Aime', d.aime), at('gouts', 'Déteste', d.deteste)] },
-      { title: 'DOSSIER PIRATÉ', lines: [{ label: 'Secret', text: So.hackUnlocked(id) ? So.SECRETS[id] : null, how: 'Pirate son dossier depuis le holophone' }] },
-    ];
-    const eps = Wd.CHAINS[id];
-    if (eps) { const done = Wd.chainProgress(id);
-      out.push({ title: 'SON HISTOIRE', lines: eps.map((ep, i) => ({ label: `Épisode ${i + 1} · ${ep.title}`, text: i < done ? ep.report : null, how: `Affinité ${Wd.CHAIN_NEED[i]}, puis l'expédition « ${ep.title} »` })) }); }
-    out.push({ title: 'CE QU\'IL·ELLE PENSE DE TOI', lines: [at('toi', 'Confidence', d.toi)] });
-    return out;
-  }
-  const completion = (secs) => { const l = secs.flatMap(s => s.lines); return l.length ? Math.floor(l.filter(x => x.text).length * 100 / l.length) : 0; };
   function dossRow(c) {
     const pct = completion(sections(c.id)), full = pct >= 100;
     const r = document.createElement('button'); r.className = 'crow';

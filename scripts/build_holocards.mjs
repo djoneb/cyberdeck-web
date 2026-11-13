@@ -11,6 +11,7 @@ const DATA = {
   e: m.EXPEDITIONS.map(x => ({ id: x.id, c: x.contactId, t: x.title, p: x.place, m: x.minutes, b: x.brief, r: x.report })),
   ch: Object.entries(m.CHAINS).map(([k, v]) => ({ c: k, eps: v.map(x => x.title), last: v[v.length - 1].report })),
   d: m.DISTRICTS,
+  dos: Object.fromEntries(Object.entries(m.DOSSIERS.contacts).map(([k, v]) => [k, v.citation])),
 };
 const src = (f) => fs.readFileSync(path.join(root, 'holocards-src', f), 'utf8');
 const out = `// Généré par scripts/build_holocards.mjs : ne pas modifier à la main (sources dans holocards-src/).

@@ -2,7 +2,8 @@ import * as S from './save.js';
 import { rankOf, nextRank, level, levelProgress, avatarFile, NEURA_STAGES } from './data.js';
 import { drawNeura } from './neura.js';
 import { GAMES, gameNote, openGame } from './games.js';
-import { holophone as holoPage } from './holophone.js';
+import { holophone as holoPage, checkDossiers } from './holophone.js';
+import * as Log from './neuralog.js';
 import { city } from './city.js';
 import { phoneGlyph } from './portrait.js';
 import * as Wd from './world.js';
@@ -129,8 +130,16 @@ function neura() {
     <p class="nq">« Si tu veux discuter, prends ton téléphone : c'est là que je vis vraiment. Je t'y attends. »</p>
     <div class="notice">La discussion avec NEURA se fait uniquement sur le téléphone (launcher Cyberdeck).</div>
     <div class="mono dim small" style="margin-top:14px">Ses stades d'évolution s'achètent au marché noir (ici ou sur le téléphone).</div>
-    <button class="btn main" data-go="marche" style="margin-top:10px">Marché noir ›</button></div></div></div>`;
+    <button class="btn main" data-go="marche" style="margin-top:10px">Marché noir ›</button></div></div>
+  <div class="label">CARNET DE NEURA // JOURNAL DE BORD · 30 JOURS</div>
+  <div class="neuralog">${Log.days().map((d, i) => `<div class="logday ${i === 0 ? 'today' : ''}"><div class="mono small">${esc(((t) => t.charAt(0).toUpperCase() + t.slice(1))(d.toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })))}${i === 0 ? ' · en cours' : ''}<span>${Wd.WEATHER_ICONS[Log.dayWeather(d)]}</span></div>
+    <p>« ${esc(Log.text(d))} »</p></div>`).join('')}</div>
+  <button class="btn main" id="logcopy">⇪ Copier le carnet</button></div>`;
   view.querySelector('[data-go]').onclick = () => go('marche');
+  view.querySelector('#logcopy').onclick = async () => {
+    const body = `Carnet de NEURA — ${S.name()}\n\n` + Log.days().map(d => d.toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) + '\n« ' + Log.text(d) + ' »').join('\n\n');
+    try { await navigator.clipboard.writeText(body); toast('Carnet copié : colle-le où tu veux'); } catch { toast('Copie impossible dans ce navigateur'); }
+  };
   stop = drawNeura(view.querySelector('canvas'), st, false);
 }
 
@@ -234,4 +243,7 @@ S.setXpHook((n) => { const c = Q.challenge('xp', n); if (c) toast(`Défi de la s
 setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) { popup(r.title, r.text); ctx.changed(); } }, 15000);
 // Cyberpsychose : la charge neurale avance aussi pendant qu'on joue sur le site
 setInterval(() => { if (!S.hasSave()) return; const c = So.psyTick(); if (c) { popup('CYBERPSYCHOSE', c); ctx.changed(); } }, 30000);
+// Dossier d'un contact complété à 100 % : récompense et carte holo « Dossier complet »
+setInterval(() => { if (!S.hasSave()) return; checkDossiers().forEach(id => { const c = Wd.contact(id);
+  S.addXp(150); S.addEddies(100); popup('DOSSIER COMPLET', `${c?.name || id} : +150 XP, +100 €$ et une carte holo « Dossier complet ».`); ctx.changed(); }); }, 20000);
 go((location.hash || '#profil').slice(1) || 'profil');

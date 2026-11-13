@@ -52,7 +52,7 @@ export function claimGig(c, g) {
   setGigState(c.id, 'claimed'); addAffinity(c.id, plus);
   S.addXp(xp); const cash = Math.floor(Math.floor(vip ? g.xp / 2 : g.xp / 3) * (chromeActive('wallet') ? 1.25 : 1)); S.addEddies(cash);
   if (vip && c.id === 'lou') addAffinity(c.id, 4);
-  Q.challenge('gig');
+  Q.challenge('gig'); logBump('g');
   return `+${xp} XP · +${cash} €$ · affinité +${plus}`;
 }
 
@@ -84,7 +84,12 @@ export function weather(day = epochDay(), h = hour()) {
 }
 export const WEATHERS = ['CIEL CLAIR', 'PLUIE ACIDE', 'ORAGE', 'TEMPÊTE DE SABLE'];
 export const WEATHER_ICONS = ['☀', '☂', 'ϟ', '≋'];
-export const WEATHER_BONUS = [0, 10, 20, 15];
+export const WEATHER_BONUS = [0, 30, 20, 15];
+export const WEATHER_FX = ['', 'rencontres plus rares : attente ×1,5', 'réseau instable : Breach −5 s, XP ×1,5', 'expéditions +25 % de durée, +40 % d\'eddies'];
+/** Météo à un instant précis (ex. : départ d'une expédition). */
+export function weatherAt(ms) { const t = new Date(ms); return weather(Math.floor(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 864e5), t.getHours()); }
+/** Compteurs du carnet de NEURA (mêmes clés que le téléphone). */
+export function logBump(k, n = 1) { const t = new Date(), key = `j${k}_${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; S.setI(B9, key, S.get(B9, key, 0) + n); }
 export const hoursLabel = (s) => (s.open === 0 && s.close === 24) ? '24/7' : `${String(s.open).padStart(2, '0')}h–${String(s.close % 24).padStart(2, '0')}h`;
 export const rep = (d) => S.get(B9, 'rep_' + d, 0);
 export function addRep(d, n) { S.setI(B9, 'rep_' + d, rep(d) + n); }
@@ -97,7 +102,7 @@ export function present(placeId) {
   const r = R(epochDay() * 24 + hour() + hashCode(placeId));
   return pl.regulars.filter(() => r.nextIntUntil(100) < 40);
 }
-const cooldown = () => (chromeActive('scanner') ? 15 : 30) * 60000;
+const cooldown = () => { const m = chromeActive('scanner') ? 15 : 30; return (weather() === 1 ? Math.floor(m * 3 / 2) : m) * 60000; };
 export const lastVisit = (id) => S.get(B8, 'city_last_' + id, 0);
 export const cooldownLeft = (id) => Math.max(0, lastVisit(id) + cooldown() - Date.now());
 export const visits = () => S.get(B8, 'visits', 0);
@@ -140,6 +145,7 @@ export function choose(placeId, e, idx) {
   if (ch.eddies < 0 && S.eddies() < -ch.eddies) return { error: 'Pas assez d\'eddies' };
   let started = false;
   if (e.kind === 'runner' && idx < 2 && e.expedition) { const err = startExpedition(e.expedition, e.who); if (err) return { error: err }; started = true; }
+  logBump('v'); { const w = weather(); if (w === 1) Q.challenge('rain_visit'); else if (w === 2) Q.challenge('storm_visit'); }
   S.setL(B8, 'city_last_' + placeId, Date.now()); S.setI(B8, 'visits', visits() + 1); S.setI(B8, 'met_' + placeId, S.get(B8, 'met_' + placeId, 0) + 1);
   delete pending[placeId];
   if (new Date().getHours() === 3) S.setB(B8, 'h3visit', true);
@@ -190,7 +196,8 @@ export function startExpedition(e, runner = null) {
   const cur = active();
   if (cur.length >= 1) return 'Une seule expédition à la fois : termine celle en cours';
   const now = Date.now();
-  const mins = chromeActive('courier') ? Math.floor((e.minutes * 3 + 3) / 4) : e.minutes;
+  const mins0 = chromeActive('courier') ? Math.floor((e.minutes * 3 + 3) / 4) : e.minutes;
+  const mins = weather() === 3 ? Math.floor(mins0 * 5 / 4) : mins0;
   saveActive([...cur, { exp: e, start: now, end: now + mins * 60000, runner }]);
   S.setSet(B8, 'taken_' + epochDay(), [...(S.get(B8, 'taken_' + epochDay(), []) || []), e.id]);
   S.persist(); return null;
@@ -224,7 +231,9 @@ export function claimExpedition(a) {
   if (mult === 160) S.setB(B8, 'xr_' + a.exp.id, true);
   const nk = `neg_${a.exp.id}@${a.end}`; if (S.get(B8, nk, false)) { S.setI(B8, 'xn_' + a.exp.id, S.get(B8, 'xn_' + a.exp.id, 0) + 1); delete S.raw(B8)[nk]; }
   const xp = Math.floor(expXp(a.exp) * mult / 100); S.addXp(xp);
-  let cash = Math.floor(expEddies(a.exp) * mult / 100); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2); S.addEddies(cash);
+  let cash = Math.floor(expEddies(a.exp) * mult / 100); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2);
+  if (weatherAt(a.start) === 3) { cash = Math.floor(cash * 7 / 5); Q.challenge('sand_exp'); }
+  logBump('e'); S.addEddies(cash);
   addRep(DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length].id, 2);
   let chainEnd = false;
   const p = parseChain(a.exp.id);

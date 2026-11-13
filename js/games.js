@@ -77,7 +77,7 @@ export function openGame(id, ctx) {
 function breach(body, api, again) {
   const CODES = ['1C', 'BD', '55', 'E9', '7A', 'FF'], N = 5, BUF = 6;
   // Puce Kairos (marché noir) +15 s, Accélérateur réflexe (cyberware) +10 s
-  const LIMIT = 45 + (itemActive('kairos') ? 15 : 0) + (chromeActive('reflex') ? 10 : 0);
+  const LIMIT = 45 + (itemActive('kairos') ? 15 : 0) + (chromeActive('reflex') ? 10 : 0) - (Wd.weather() === 2 ? 5 : 0);
   const grid = [...Array(N)].map(() => [...Array(N)].map(() => CODES[rnd(6)]));
   const path = []; let row = 0, col = rnd(N); path.push([row, col]); let vert = true;
   while (path.length < BUF) {
@@ -105,7 +105,7 @@ function breach(body, api, again) {
   };
   const finish = (win) => {
     result = win; render(); win ? sfx.ok() : sfx.err();
-    if (win) { S.addXp(25); S.unlock('breach_win'); if (LIMIT - left < 10) S.unlock('breach_fast'); api.reward('breach'); }
+    if (win) { S.addXp(Wd.weather() === 2 ? 37 : 25); S.unlock('breach_win'); if (LIMIT - left < 10) S.unlock('breach_fast'); api.reward('breach'); }
     api.result(win, win ? '> ACCÈS AUTORISÉ' : '> ÉCHEC DE LA BRÈCHE', win ? '+25 XP' : 'Le tampon est plein ou le temps est écoulé.', again);
   };
   const pick = (r, c) => {

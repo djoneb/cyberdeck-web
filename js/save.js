@@ -45,6 +45,7 @@ export function addXp(n) {
   if (n > 0 && String(get('cyberdeck_b6', 'chrome', '') || '').split(',').filter(Boolean).length >= 7) n = Math.floor(n * 12 / 10);
   // Stim XP (marché noir ou cadeau) : XP doublée pendant 24 h, comme sur le téléphone.
   if (n > 0 && get('cyberdeck_b5', 'boostUntil', 0) > Date.now()) n *= 2;
+  if (n > 0) { const t = new Date(), k = `jx_${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; setI('cyberdeck_b9', k, get('cyberdeck_b9', k, 0) + n); }
   if (n > 0 && xpHook) xpHook(n);
   let p = {}; try { p = JSON.parse(get('cyberdeck', 'progress', '{}')); } catch { /* vide */ }
   p.xp = String(xp() + n); setS('cyberdeck', 'progress', JSON.stringify(p)); persist();
