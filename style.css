@@ -411,3 +411,10 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .psy { margin: 12px 0 4px; } .psyhead { display: flex; justify-content: space-between; align-items: baseline; }
 .psybar { height: 8px; background: rgba(255, 255, 255, .06); margin: 4px 0 6px; }
 .psybar i { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--amber), var(--red)); }
+/* Dossiers des contacts (wiki) */
+.dossier { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.dhead { display: flex; gap: 16px; align-items: center; }
+.dsec { background: rgba(255, 255, 255, .03); border: 1px solid rgba(232, 80, 91, .35); padding: 12px 14px; }
+.dline { margin-top: 10px; } .dline .tiny { color: var(--hcyan); } .dline.lock .tiny { color: var(--dim); }
+.dline > div:last-child { font-size: 17px; line-height: 1.4; }
+.redact { color: rgba(127, 154, 162, .45); letter-spacing: -1px; }

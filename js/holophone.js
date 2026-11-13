@@ -3,6 +3,7 @@ import * as S from './save.js';
 import * as Wd from './world.js';
 import * as So from './social.js';
 import { portraitCanvas, drawPortrait, phoneGlyph } from './portrait.js';
+import { DOSSIERS } from './gamedata.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
@@ -20,13 +21,16 @@ export function holophone(view, ctx, callId = null) {
     const avail = Wd.available(), unread = So.unreadCount();
     view.innerHTML = `<div class="holo">${head('CONTACTS')}
       <div class="row" style="margin-top:8px"><button class="btn ${tab === 'contacts' ? 'main' : ''}" data-tab="contacts">CONTACTS</button>
-      <button class="btn ${tab === 'sms' ? 'main' : ''}" data-tab="sms">MESSAGES${unread ? ` (${unread})` : ''}</button></div>
+      <button class="btn ${tab === 'sms' ? 'main' : ''}" data-tab="sms">MESSAGES${unread ? ` (${unread})` : ''}</button>
+      <button class="btn ${tab === 'doss' ? 'main' : ''}" data-tab="doss">DOSSIERS</button></div>
       <div class="mono small" style="color:var(--amber);margin:4px 0 8px">${avail.filter(id => Wd.gigState(id) === null).length} gig(s) disponible(s) aujourd'hui · ${S.eddies()} €$</div>
       ${dateBanner()}<div class="contacts"></div>
       <p class="dim small">Sur le site, les gigs de mini-jeux (Breach, Déchiffre, Réflexes) se valident en jouant. Les autres se font sur le téléphone. Rappelle ensuite le contact pour être payé·e.</p></div>`;
     view.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; list(); });
     const box = view.querySelector('.contacts');
-    if (tab === 'sms') { box.classList.add('one'); inbox(box); } else Wd.CONTACTS.forEach(c => box.appendChild(row(c)));
+    if (tab === 'sms') { box.classList.add('one'); inbox(box); }
+    else if (tab === 'doss') Wd.CONTACTS.forEach(c => box.appendChild(dossRow(c)));
+    else Wd.CONTACTS.forEach(c => box.appendChild(row(c)));
     const cd = view.querySelector('#cancelDate'); if (cd) cd.onclick = () => { So.cancelDate(); ctx.toast('Rendez-vous annulé'); list(); };
   }
   function dateBanner() {
@@ -55,6 +59,52 @@ export function holophone(view, ctx, callId = null) {
     if (partner || aff >= 60) pw.insertAdjacentHTML('beforeend', `<em>${partner ? '♥' : '★'}</em>`);
     r.onclick = () => call(c);
     return r;
+  }
+
+  // ─────────────── Dossiers : le wiki de chaque contact, qui se complète au fil du jeu (mêmes règles que l'appli)
+  function sections(id) {
+    const d = DOSSIERS.contacts[id]; if (!d) return [];
+    const L = DOSSIERS.levels, aff = Wd.affinity(id);
+    const at = (k, label, text) => ({ label, text: aff >= L[k] ? text : null, how: `Affinité ${L[k]}` });
+    const out = [
+      { title: 'FICHE', lines: [at('fiche', 'Surnom', d.alias), at('fiche', 'Âge', d.age), at('fiche', 'Où le·la trouver', d.lieu), at('fiche', 'Activité', d.metier),
+        at('traits', 'Signe particulier', d.signe), at('traits', 'Citation', `« ${d.citation} »`)] },
+      { title: 'BIOGRAPHIE', lines: [at('bio1', 'Qui c\'est', d.bio[0]), at('bio2', 'Son passé', d.bio[1]), at('bio3', 'Sa vie aujourd\'hui', d.bio[2])] },
+      { title: 'PERSONNALITÉ', lines: [at('gouts', 'Aime', d.aime), at('gouts', 'Déteste', d.deteste)] },
+      { title: 'DOSSIER PIRATÉ', lines: [{ label: 'Secret', text: So.hackUnlocked(id) ? So.SECRETS[id] : null, how: 'Pirate son dossier depuis le holophone' }] },
+    ];
+    const eps = Wd.CHAINS[id];
+    if (eps) { const done = Wd.chainProgress(id);
+      out.push({ title: 'SON HISTOIRE', lines: eps.map((ep, i) => ({ label: `Épisode ${i + 1} · ${ep.title}`, text: i < done ? ep.report : null, how: `Affinité ${Wd.CHAIN_NEED[i]}, puis l'expédition « ${ep.title} »` })) }); }
+    out.push({ title: 'CE QU\'IL·ELLE PENSE DE TOI', lines: [at('toi', 'Confidence', d.toi)] });
+    return out;
+  }
+  const completion = (secs) => { const l = secs.flatMap(s => s.lines); return l.length ? Math.floor(l.filter(x => x.text).length * 100 / l.length) : 0; };
+  function dossRow(c) {
+    const pct = completion(sections(c.id)), full = pct >= 100;
+    const r = document.createElement('button'); r.className = 'crow';
+    r.innerHTML = `<span class="pwrap"></span><span class="cmid"><b style="color:var(--hcyan)">${esc(c.name.toUpperCase())}</b><span class="dim">${esc(c.role)}</span>
+      <span class="affbar" style="width:100%"><i style="width:${pct}%;background:${full ? 'var(--amber)' : 'var(--hcyan)'}"></i></span></span>
+      <span class="cright"><b class="mono" style="color:${full ? 'var(--amber)' : 'var(--hcyan)'}">${pct} %</b></span>`;
+    r.querySelector('.pwrap').appendChild(portraitCanvas(c, 64, full));
+    r.onclick = () => dossier(c);
+    return r;
+  }
+  function dossier(c) {
+    clear();
+    const secs = sections(c.id), pct = completion(secs), aff = Wd.affinity(c.id);
+    view.innerHTML = `<div class="holo">${head('DOSSIER', true)}<div class="dossier">
+      <div class="dhead"><span class="pwrap"></span><div><div class="mono small" style="color:rgba(232,80,91,.8)">DOSSIER // ${esc(c.id.toUpperCase())}</div>
+        <h2 style="color:var(--hcyan);margin:2px 0">${esc(c.name.toUpperCase())}</h2><div class="dim">${esc(c.role)}</div>
+        <div class="mono small" style="color:var(--amber)">Relation : ${Wd.relation(aff, c.romance, So.partner() === c.id)} (${aff}/100)</div>
+        <div class="mono small" style="color:${pct >= 100 ? 'var(--amber)' : 'var(--hcyan)'}">Dossier complété à ${pct} %</div>
+        <button class="btn main" id="dcall" style="margin-top:8px">☎ Appeler</button></div></div>
+      ${secs.map(s => `<div class="dsec"><div class="mono small" style="color:var(--hred)">// ${esc(s.title)}</div>${s.lines.map(l => `<div class="dline ${l.text ? '' : 'lock'}">
+        <div class="mono tiny">${esc(l.label.toUpperCase())}</div>${l.text ? `<div>${esc(l.text)}</div>` : `<div><span class="redact">█████ ███ ████████</span> <span class="mono tiny dim">🔒 ${esc(l.how)}</span></div>`}</div>`).join('')}</div>`).join('')}
+      <p class="dim small">Le dossier se complète en gagnant l'affinité du contact (gigs, conversations, cadeaux), en piratant son dossier et en vivant son histoire.</p></div></div>`;
+    view.querySelector('.dhead .pwrap').appendChild(portraitCanvas(c, 140, pct >= 100));
+    view.querySelector('#back').onclick = () => { tab = 'doss'; list(); };
+    view.querySelector('#dcall').onclick = () => call(c);
   }
 
   // ─────────────── Boîte de réception
