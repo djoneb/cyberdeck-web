@@ -54,7 +54,7 @@ export function holophone(view, ctx, callId = null) {
     r.className = 'crow' + (hi ? ' hi' : '');
     r.innerHTML = `<span class="pwrap"></span><span class="cmid"><b>${esc(c.name.toUpperCase())}</b><span class="dim">${esc(c.role)}</span><span class="mono small" style="color:${col}">${esc(status)}</span></span>
       <span class="cright"><span style="color:${aff >= 60 ? 'var(--amber)' : 'var(--dim)'}">${Wd.relation(aff, c.romance, partner)}</span>
-      <span class="affbar"><i style="width:${aff}%;background:${aff >= 60 ? 'var(--amber)' : 'var(--hred)'}"></i></span>${hi ? '<span class="mono" style="color:var(--hcyan)">☎</span>' : ''}</span>`;
+      <span class="affbar"><i style="width:${aff}%;background:${aff >= 60 ? 'var(--amber)' : 'var(--hred)'}"></i></span>${hi ? `<span style="color:var(--hcyan)">${phoneGlyph('currentColor', 20)}</span>` : ''}</span>`;
     const pw = r.querySelector('.pwrap'); pw.appendChild(portraitCanvas(c, 76, aff >= 90 || partner));
     if (partner || aff >= 60) pw.insertAdjacentHTML('beforeend', `<em>${partner ? '♥' : '★'}</em>`);
     r.onclick = () => call(c);
@@ -98,7 +98,7 @@ export function holophone(view, ctx, callId = null) {
         <h2 style="color:var(--hcyan);margin:2px 0">${esc(c.name.toUpperCase())}</h2><div class="dim">${esc(c.role)}</div>
         <div class="mono small" style="color:var(--amber)">Relation : ${Wd.relation(aff, c.romance, So.partner() === c.id)} (${aff}/100)</div>
         <div class="mono small" style="color:${pct >= 100 ? 'var(--amber)' : 'var(--hcyan)'}">Dossier complété à ${pct} %</div>
-        <button class="btn main" id="dcall" style="margin-top:8px">☎ Appeler</button></div></div>
+        <button class="btn main dcall" id="dcall" style="margin-top:8px">${phoneGlyph('currentColor', 20)} APPELER</button></div></div>
       ${secs.map(s => `<div class="dsec"><div class="mono small" style="color:var(--hred)">// ${esc(s.title)}</div>${s.lines.map(l => `<div class="dline ${l.text ? '' : 'lock'}">
         <div class="mono tiny">${esc(l.label.toUpperCase())}</div>${l.text ? `<div>${esc(l.text)}</div>` : `<div><span class="redact">█████ ███ ████████</span> <span class="mono tiny dim">🔒 ${esc(l.how)}</span></div>`}</div>`).join('')}</div>`).join('')}
       <p class="dim small">Le dossier se complète en gagnant l'affinité du contact (gigs, conversations, cadeaux), en piratant son dossier et en vivant son histoire.</p></div></div>`;

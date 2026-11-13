@@ -418,3 +418,4 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .dline { margin-top: 10px; } .dline .tiny { color: var(--hcyan); } .dline.lock .tiny { color: var(--dim); }
 .dline > div:last-child { font-size: 17px; line-height: 1.4; }
 .redact { color: rgba(127, 154, 162, .45); letter-spacing: -1px; }
+.btn.dcall { display: inline-flex; align-items: center; gap: 8px; }
