@@ -12,13 +12,15 @@ export function cyberware(view, ctx) {
   const paint = () => {
     const crisis = So.psyTick(); if (crisis) { ctx.toast(crisis); ctx.changed(); }
     const eq = So.equipped(), slots = So.slots(), lv = ctx.level(), over = eq.length >= 7, psy = So.psyPercent(), st = So.psyStage(psy);
-    const c7 = slots >= 7 && eq[6] ? So.CHROMES.find(x => x.id === eq[6]) : null;
+    const c7 = slots >= 7 && eq[6] ? So.CHROMES.find(x => x.id === eq[6]) : null, rev = So.slot7Revealed();
+    if (rev && slots < 7 && !S.get('cyberdeck_b6', 'slot7Told', false)) { S.setB('cyberdeck_b6', 'slot7Told', true); S.persist();
+      setTimeout(() => ctx.toast('NEURA : « Six ports pleins… Il existe un 7ᵉ emplacement. Interdit. Le marché noir en a un. »'), 50); }
     view.innerHTML = `<div class="sheethead"><h1 class="glitch" style="color:#b98cff">CYBERWARE</h1><div class="mono dim small">IMPLANTS · ${eq.length}/${slots} ÉQUIPÉS · NIVEAU ${lv}</div></div>
       <div class="chromebox ${over ? 'overcharged' : ''}"><div class="mono small" style="color:${over ? 'var(--red)' : 'var(--primary)'}">EMPLACEMENTS CYBERWARE // ${eq.length}/${slots}</div>
       <div class="slots">${[0, 1, 2, 3, 4, 5].map(i => { const open = i < slots, c = open && eq[i] ? So.CHROMES.find(x => x.id === eq[i]) : null;
         return `<button class="slot ${c ? 'on' : ''} ${open ? '' : 'locked'}" ${open ? '' : 'data-market'}>${!open ? '🔒 MARCHÉ' : c ? esc(c.name) : '— vide —'}</button>`; }).join('')}
-        <button class="slot slot7 ${c7 ? 'on' : ''} ${slots >= 7 ? '' : 'locked'}" ${slots >= 7 ? '' : 'data-market'}>${slots < 7 ? '🔒 7ᵉ EMPLACEMENT · SURCHARGE CHROMÉE (MARCHÉ)' : c7 ? '⚠ SURCHARGE · ' + esc(c7.name) : '— 7ᵉ emplacement · surcharge —'}</button></div>
-      ${slots >= 7 || psy > 0 ? `<div class="psy"><div class="psyhead"><span class="mono small dim">CHARGE NEURALE</span><b class="mono" style="color:${['var(--green)', 'var(--amber)', '#ff7a3c', 'var(--red)'][st]}">${psy} % · ${So.PSY_STAGES[st]}</b></div>
+        ${rev ? `<button class="slot slot7 ${c7 ? 'on' : ''} ${slots >= 7 ? '' : 'locked'}" ${slots >= 7 ? '' : 'data-market'}>${slots < 7 ? '🔒 7ᵉ EMPLACEMENT · SURCHARGE CHROMÉE (MARCHÉ)' : c7 ? '⚠ SURCHARGE · ' + esc(c7.name) : '— 7ᵉ emplacement · surcharge —'}</button>` : ''}</div>
+      ${rev && (slots >= 7 || psy > 0) ? `<div class="psy"><div class="psyhead"><span class="mono small dim">CHARGE NEURALE</span><b class="mono" style="color:${['var(--green)', 'var(--amber)', '#ff7a3c', 'var(--red)'][st]}">${psy} % · ${So.PSY_STAGES[st]}</b></div>
         <div class="psybar"><i style="width:${psy}%"></i></div>
         <div class="small" style="color:${over ? 'var(--red)' : 'var(--dim)'}">${So.psyBanned() ? `Crise récente : 7ᵉ emplacement bloqué encore ${So.psyBanLeft()}.`
           : over ? 'Saturé de chrome : +20 % d\'XP sur tout. La charge monte de 4 % par heure ; à 100 %, crise de cyberpsychose (implants déconnectés, soins payants).'
@@ -41,7 +43,7 @@ export function market(view, ctx) {
       <div class="dim small">Gagne des eddies : gigs, expéditions, rencontres en ville, infiltration… et sur le téléphone (missions, focus, contrats).</div>
       ${So.boostActive() ? '<div style="color:var(--secondary)">⚡ Stim XP active : XP doublée</div>' : ''}</div>
       ${[['evolution', 'ÉVOLUTION NEURA'], ['look', 'APPARENCE'], ['fonction', 'FONCTIONS'], ['identite', 'IDENTITÉ'], ['slot', 'CYBERWARE · EMPLACEMENTS & SOINS']].map(([k, label]) => `<div class="label">${label}</div>
-        ${So.ITEMS.filter(i => i.kind === k).map(item => {
+        ${So.ITEMS.filter(i => i.kind === k && !((i.id === 'slot_7' || i.id === 'immuno') && !So.slot7Revealed())).map(item => {
           const owned = !item.consumable && So.owned(item.id), on = owned && So.itemActive(item.id), lock = !owned && So.lockedReason(item);
           let act;
           if (k === 'identite') act = `<button class="btn ${S.eddies() >= item.price ? 'main' : ''}" data-id-edit="${item.id}">${item.price} €$</button>`;

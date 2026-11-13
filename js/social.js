@@ -128,6 +128,7 @@ export function lockedReason(item) {
   const i = EVO.indexOf(item.id); if (i > 0 && !owned(EVO[i - 1])) return `NEURA doit d'abord atteindre le stade ${i + 1}`;
   if (item.id === 'slot_5' && !owned('slot_4')) return 'Installe d\'abord l\'emplacement n°4';
   if (item.id === 'slot_6' && !owned('slot_5')) return 'Installe d\'abord l\'emplacement n°5';
+  if ((item.id === 'slot_7' || item.id === 'immuno') && !slot7Revealed()) return 'Article introuvable';
   if (item.id === 'slot_7' && !owned('slot_6')) return 'Installe d\'abord l\'emplacement n°6';
   return null;
 }
@@ -175,6 +176,13 @@ export function toggleChrome(id) {
   S.setS(B6, 'chrome', cur.join(',')); S.persist(); return null;
 }
 
+/** Le 7ᵉ emplacement reste secret tant que les 6 ne sont pas achetés ET remplis ; ensuite il reste visible. */
+export function slot7Revealed() {
+  if (S.get(B6, 'slot7Seen', false) || owned('slot_7')) return true;
+  const ok = owned('slot_6') && equipped().length >= 6;
+  if (ok) { S.setB(B6, 'slot7Seen', true); S.persist(); }
+  return ok;
+}
 // ── Cyberpsychose (mêmes règles que le téléphone) : charge en dixièmes de % (0..1000)
 export const overcharged = () => equipped().length >= 7;
 export const psyLevel = () => S.get(B6, 'psy', 0);
