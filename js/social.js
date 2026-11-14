@@ -2,6 +2,7 @@
 import * as S from './save.js';
 import { R, hashCode, today, epochDay } from './krand.js';
 import * as Q from './quests.js';
+import { weather } from './world.js';
 import { CONTACTS, SMS_LINES, SECRETS, CONVOS, DATE_PLACES, BOND_TITLES, DATE_LINES, GIFTS_R, CHROMES, ITEMS } from './gamedata.js';
 export { SECRETS, CONVOS, DATE_PLACES, CHROMES, ITEMS };
 
@@ -195,7 +196,7 @@ export const PSY_STAGES = ['STABLE', 'TENSION', 'INSTABLE', 'CRITIQUE'];
 export function psyTick(now = Date.now()) {
   const at = S.get(B6, 'psyAt', 0); let lv = psyLevel(); const over = overcharged();
   if (!at || (!over && lv === 0)) { S.setL(B6, 'psyAt', now); return null; }
-  const step = Math.floor(3600000 / (over ? 40 : 60)), n = Math.floor((now - at) / step);
+  const step = Math.floor(3600000 / (over ? (weather() === 4 ? 80 : 40) : 60)), n = Math.floor((now - at) / step);
   if (n <= 0) return null;
   lv = over ? Math.min(1000, lv + n) : Math.max(0, lv - n);
   S.setI(B6, 'psy', lv); S.setL(B6, 'psyAt', (lv === 0 || lv === 1000) ? now : at + n * step);

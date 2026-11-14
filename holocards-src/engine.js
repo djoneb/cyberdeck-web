@@ -252,11 +252,14 @@ function gallery(root, opts) {
   root.classList.add('hc');
   root.innerHTML = `<div class="hc-head"><div><div class="hc-eyebrow">COLLECTION HOLO // NEO-BXL</div><h1 class="hc-h1">Cartes holo</h1></div>
       <div class="hc-progress"><b>${total}</b><span>/ ${CARDS.length} cartes</span><i><u style="width:${total / CARDS.length * 100}%"></u></i></div></div>
-    <p class="hc-lead">Toutes les cartes restent cachées derrière un « ? » jusqu'à leur obtention. Au verso, les cartes normales indiquent comment les obtenir ; les secrètes ne disent rien. Clique une carte pour la retourner.</p>
+    <p class="hc-lead">Toutes les cartes restent cachées derrière un « ? » jusqu'à leur obtention. Au verso, les cartes normales indiquent comment les obtenir ; les secrètes ne disent rien. Dans « Mes decks », tes cartes obtenues sont empilées : ouvre un deck et sors une carte pour la faire pivoter dans tous les sens.</p>
+    <div class="hc-filters hc-modes" role="group" aria-label="Affichage"><button type="button" data-m="decks" style="--k:#ffd27a" aria-pressed="true">◫ MES DECKS</button><button type="button" data-m="coll" style="--k:#00d8f0" aria-pressed="false">▦ COLLECTION COMPLÈTE</button></div>
+    <div class="hc-decks"></div>
+    <div class="hc-coll" hidden>
     <div class="hc-legend">${Object.entries(FAMILIES).map(([k, f]) => `<div class="hc-lg" style="--k:${f.hex}"><b><span>${f.name}</span><span>${famGot[k] || 0}/${famCount[k]}</span></b><p>${f.txt}</p></div>`).join('')}</div>
     <div class="hc-filters" role="group" aria-label="Filtrer les cartes">${[['all', 'TOUTES', '#00d8f0'], ['owned', 'OBTENUES', '#7cf29a'], ...Object.entries(FAMILIES).map(([k, f]) => [k, f.name, f.hex])]
       .map(([k, l, hex]) => `<button type="button" data-f="${k}" style="--k:${hex}" aria-pressed="${k === 'all'}">${l}</button>`).join('')}</div>
-    <div class="hc-grid"></div>`;
+    <div class="hc-grid"></div></div>`;
   const grid = root.querySelector('.hc-grid');
   const draw = () => {
     let html = '';
@@ -272,7 +275,89 @@ function gallery(root, opts) {
   root.querySelector('.hc-filters').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; filter = b.dataset.f;
     root.querySelectorAll('.hc-filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   wireCards(grid);
+  // ── Mes decks : les cartes obtenues, empilées par personnage, famille ou rareté
+  const decksBox = root.querySelector('.hc-decks'), collBox = root.querySelector('.hc-coll');
+  let sort = 'perso', openDeck = null;
+  const drawDecks = () => {
+    const groups = new Map();
+    CARDS.forEach((c) => { const [k, name, hex] = deckKey(c, sort); if (!groups.has(k)) groups.set(k, { k, name, hex, all: [], own: [] });
+      const g = groups.get(k); g.all.push(c); if (got.has(c.id)) g.own.push(c); });
+    const list = [...groups.values()];
+    if (openDeck && groups.has(openDeck)) {
+      const g = groups.get(openDeck), own = [...g.own].sort((x, y) => RANK.indexOf(y.rar) - RANK.indexOf(x.rar));
+      decksBox.innerHTML = `<div class="hc-dkhead"><button type="button" class="hc-btn hc-back2">‹ Tous les decks</button>
+        <div><b style="color:${g.hex}">${esc(g.name.toUpperCase())}</b><span>${g.own.length}/${g.all.length} cartes · touche une carte pour la sortir du deck</span></div></div>
+        <div class="hc-fan">${own.map((c, i) => `<div class="hc-fanc" style="--i:${i};--n:${own.length}" data-pick="${c.id}">${cardHtml(c, true, fresh.has(c.id))}</div>`).join('') || '<p class="hc-lead">Aucune carte de ce deck pour l\'instant.</p>'}</div>`;
+      paintCanvases(decksBox);
+      decksBox.querySelector('.hc-back2').onclick = () => { openDeck = null; drawDecks(); };
+      decksBox.querySelectorAll('[data-pick]').forEach(el => el.onclick = () => inspect(BY_ID[el.dataset.pick]));
+      return;
+    }
+    decksBox.innerHTML = `<div class="hc-filters hc-sorts" role="group" aria-label="Ranger les decks">${[['perso', 'PAR PERSONNAGE'], ['fam', 'PAR FAMILLE'], ['rar', 'PAR RARETÉ']]
+        .map(([k, l]) => `<button type="button" data-s="${k}" style="--k:#00d8f0" aria-pressed="${k === sort}">${l}</button>`).join('')}</div>
+      <div class="hc-deckgrid">${list.map((g) => { const top = [...g.own].sort((x, y) => RANK.indexOf(y.rar) - RANK.indexOf(x.rar));
+        return `<div role="button" tabindex="0" class="hc-deck ${g.own.length ? '' : 'hc-dempty'}" data-deck="${g.k}" style="--k:${g.hex}" aria-label="Deck ${esc(g.name)}, ${g.own.length} cartes sur ${g.all.length}">
+          <div class="hc-stack">${top.slice(0, 3).reverse().map((c, i, arr) => `<div class="hc-sc" style="--d:${arr.length - 1 - i}">${cardHtml(c, true, false)}</div>`).join('') || '<div class="hc-sc hc-scq">?</div>'}</div>
+          <b>${esc(g.name)}</b><span>${g.own.length}/${g.all.length}</span><i><u style="width:${g.own.length / g.all.length * 100}%"></u></i></div>`; }).join('')}</div>`;
+    paintCanvases(decksBox);
+    decksBox.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { sort = b.dataset.s; drawDecks(); });
+    decksBox.querySelectorAll('[data-deck]').forEach(b => { const open = () => { const g = groups.get(b.dataset.deck); if (!g.own.length) return; openDeck = b.dataset.deck; drawDecks(); };
+      b.onclick = open; b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }; });
+  };
+  root.querySelector('.hc-modes').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return;
+    root.querySelectorAll('.hc-modes button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const decks = b.dataset.m === 'decks'; decksBox.hidden = !decks; collBox.hidden = decks; });
+  drawDecks();
   draw();
+}
+const RANK = ['common', 'bronze', 'rare', 'silver', 'epic', 'gold', 'leg', 'ghost', 'myth', 'secret'];
+/** Deck d'une carte selon le rangement choisi : [clé, nom, couleur]. */
+function deckKey(c, sort) {
+  if (sort === 'fam') return ['f_' + c.fam, FAMILIES[c.fam].name, FAMILIES[c.fam].hex];
+  if (sort === 'rar') return ['r_' + c.rar, RAR[c.rar].name, RAR[c.rar].hex];
+  if (c.contact && DATA.c[c.contact]) return ['c_' + c.contact, DATA.c[c.contact].name, '#e8505b'];
+  if (c.district) return ['d_' + c.district.id, c.district.name, c.district.color];
+  if (c.runner) return ['runner', 'Runners inconnus', '#ff3b4e'];
+  return ['secret', 'Événements secrets', '#f4fbff'];
+}
+/** Sortir une carte du deck : on la fait pivoter dans tous les sens (glisser), on la retourne, on zoome. */
+function inspect(c) {
+  const ov = document.createElement('div'); ov.className = 'hc hc-insp';
+  ov.innerHTML = `<div class="hc-istage"><div class="hc-icard">${cardHtml(c, true, false)}</div></div>
+    <div class="hc-ihint">Glisse pour faire pivoter la carte · double-touche pour la retourner</div>
+    <div class="hc-ibar"><button type="button" class="hc-btn" data-a="face">⟲ Face</button><button type="button" class="hc-btn" data-a="flip">⇄ Retourner</button><button type="button" class="hc-btn" data-a="close">✕ Ranger dans le deck</button></div>`;
+  document.body.appendChild(ov); paintCanvases(ov);
+  const card = ov.querySelector('.hc-card'), inner = ov.querySelector('.hc-inner'), stage = ov.querySelector('.hc-istage');
+  let rx = -8, ry = -18, vx = 0, vy = 0, zoom = 1, drag = null, raf = 0, animT = 0, target = null;
+  const apply = () => {
+    inner.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    card.style.transform = `scale(${zoom})`;
+    const fy = ((ry % 360) + 360) % 360;
+    card.style.setProperty('--mx', (50 + Math.sin(ry * Math.PI / 180) * 50) + '%'); card.style.setProperty('--my', (50 - Math.sin(rx * Math.PI / 180) * 50) + '%');
+    card.classList.toggle('hc-showback', fy > 90 && fy < 270);
+  };
+  const loop = () => {
+    if (target) { rx += (target[0] - rx) * 0.15; ry += (target[1] - ry) * 0.15; if (Math.abs(target[0] - rx) + Math.abs(target[1] - ry) < 0.3) { rx = target[0]; ry = target[1]; target = null; } }
+    else if (!drag) { rx += vx; ry += vy; vx *= 0.94; vy *= 0.94; if (Math.abs(vx) + Math.abs(vy) < 0.02) { vx = vy = 0; } }
+    apply(); raf = (drag || target || vx || vy) ? requestAnimationFrame(loop) : 0;
+  };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+  stage.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; vx = vy = 0; target = null; stage.setPointerCapture(e.pointerId); kick(); });
+  stage.addEventListener('pointermove', (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY };
+    ry += dx * 0.5; rx -= dy * 0.5; vy = dx * 0.5; vx = -dy * 0.5; apply(); });
+  const up = () => { drag = null; kick(); };
+  stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+  stage.addEventListener('wheel', (e) => { e.preventDefault(); zoom = Math.max(0.6, Math.min(1.8, zoom - e.deltaY * 0.0015)); apply(); }, { passive: false });
+  // retourner : vers le côté opposé à celui qu'on voit, au plus court
+  const flipTarget = () => { const f = Math.round(ry / 360) * 360, bk = Math.round((ry - 180) / 360) * 360 + 180; return [0, Math.abs(ry - f) <= Math.abs(ry - bk) ? bk : f]; };
+  stage.addEventListener('dblclick', () => { target = flipTarget(); kick(); });
+  ov.querySelector('.hc-ibar').addEventListener('click', (e) => { const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+    if (a === 'close') { cancelAnimationFrame(raf); ov.remove(); return; }
+    if (a === 'face') { target = [0, Math.round(ry / 360) * 360]; zoom = 1; }
+    if (a === 'flip') target = flipTarget();
+    kick(); });
+  // petite entrée : la carte sort du deck en tournant
+  ry = -200; target = [-8, -18]; kick();
 }
 /** Révélation des nouvelles cartes, une par une. */
 function reveal(ids, onDone) {

@@ -78,14 +78,26 @@ export const PHASES = ['LEVER DU SOLEIL', 'APRÈS-MIDI', 'SOIRÉE', 'NUIT'];
 export const isNight = (h = hour()) => phase(h) === 3;
 export const phaseBonus = (p = phase()) => p === 2 ? 10 : p === 3 ? 25 : 0;
 /** Météo : change toutes les 4 heures, même tirage que le téléphone (Random(Int)). 0 clair, 1 pluie acide, 2 orage, 3 sable. */
-export function weather(day = epochDay(), h = hour()) {
-  const r = new KRandom(day * 6 + Math.floor(h / 4), true).nextIntUntil(100);
-  return r < 40 ? 0 : r < 70 ? 1 : r < 85 ? 2 : 3;
+/** Périodes de 3 à 5 h, chacune avec sa météo, jamais deux fois la même d'affilée (même tirage que le téléphone).
+ *  0 clair, 1 pluie acide, 2 orage, 3 tempête de sable, 4 tempête magnétique. */
+export function segments(day) {
+  const r = new KRandom(day * 31 + 7, true), pick = (n) => n < 35 ? 0 : n < 60 ? 1 : n < 75 ? 2 : n < 87 ? 3 : 4;
+  const out = []; let h = 0, prev = -1;
+  while (h < 24) {
+    const len = 3 + r.nextIntUntil(3);
+    let w = pick(r.nextIntUntil(100));
+    if (w === prev) w = pick(r.nextIntUntil(100));
+    if (w === prev) w = (w + 1) % 5;
+    out.push([h, Math.min(24, h + len), w]); prev = w; h += len;
+  }
+  return out;
 }
-export const WEATHERS = ['CIEL CLAIR', 'PLUIE ACIDE', 'ORAGE', 'TEMPÊTE DE SABLE'];
-export const WEATHER_ICONS = ['☀', '☂', 'ϟ', '≋'];
-export const WEATHER_BONUS = [0, 30, 20, 15];
-export const WEATHER_FX = ['', 'rencontres plus rares : attente ×1,5', 'réseau instable : Breach −5 s, XP ×1,5', 'expéditions +25 % de durée, +40 % d\'eddies'];
+export const weather = (day = epochDay(), h = hour()) => segments(day).find(s => h < s[1])[2];
+export const weatherEnd = (day = epochDay(), h = hour()) => segments(day).find(s => h < s[1])[1] % 24;
+export const WEATHERS = ['CIEL CLAIR', 'PLUIE ACIDE', 'ORAGE', 'TEMPÊTE DE SABLE', 'TEMPÊTE MAGNÉTIQUE'];
+export const WEATHER_ICONS = ['☀', '☂', 'ϟ', '≋', '⌁'];
+export const WEATHER_BONUS = [0, 30, 20, 15, 25];
+export const WEATHER_FX = ['', 'rencontres plus rares : attente ×1,5', 'réseau instable : Breach −5 s, XP ×1,5', 'expéditions +25 % de durée, +40 % d\'eddies', 'implants instables : charge neurale ×2'];
 /** Météo à un instant précis (ex. : départ d'une expédition). */
 export function weatherAt(ms) { const t = new Date(ms); return weather(Math.floor(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 864e5), t.getHours()); }
 /** Compteurs du carnet de NEURA (mêmes clés que le téléphone). */

@@ -51,7 +51,7 @@ export function city(view, ctx, tab = 'map') {
       <div class="map"><canvas></canvas><div class="maplabels"></div>
       ${(() => { const ph = Wd.phase(), we = Wd.weather(), pb = Wd.phaseBonus(ph), wb = Wd.WEATHER_BONUS[we];
         return `<span class="mono tiny maptag skytag" style="left:8px"><span style="color:${['#ffb07a', C.amber, '#ff7a5a', '#b98cff'][ph]}">${['◒', '☀', '◓', '☾'][ph]} ${Wd.PHASES[ph]}${pb ? ' · +' + pb + ' %' : ''}</span>
-          <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''}</span>${we ? `<span style="color:${C.dim}">${Wd.WEATHER_FX[we]}</span>` : ''}</span>`; })()}
+          <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b', '#5cffb0'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''} · jusqu'à ${String(Wd.weatherEnd()).padStart(2, '0')} h</span>${we ? `<span style="color:${C.dim}">${Wd.WEATHER_FX[we]}</span>` : ''}</span>`; })()}
       <span class="mono tiny maptag" style="right:8px;color:${C.amber}">● contact sur place</span></div>
       <div id="expreminder"></div><div class="reps"></div><p class="dim small" id="reptxt"></p>
       <div class="mono dim small" style="margin:16px 0 6px">LIEUX · ${Wd.visits()} VISITE(S)</div><div class="places"></div>`;
@@ -91,7 +91,7 @@ export function city(view, ctx, tab = 'map') {
       const circle = (p, r, col, stroke) => { g.beginPath(); g.arc(p[0], p[1], r, 0, 7); if (stroke) { g.strokeStyle = col; g.lineWidth = stroke; g.stroke(); } else { g.fillStyle = col; g.fill(); } };
       // ciel : cycle du soleil (lever, après-midi, soirée, nuit), assombri ou ensablé selon la météo
       const mix = (hex, to, k) => { const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16), c = (sh) => Math.round(((a >> sh) & 255) * (1 - k) + ((b >> sh) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
-      const tint = (hex) => weather === 1 ? mix(hex, '#1c2630', 0.4) : weather === 2 ? mix(hex, '#1c2630', 0.6) : weather === 3 ? mix(hex, '#b7792f', 0.45) : hex;
+      const tint = (hex) => weather === 1 ? mix(hex, '#1c2630', 0.4) : weather === 2 ? mix(hex, '#1c2630', 0.6) : weather === 3 ? mix(hex, '#b7792f', 0.45) : weather === 4 ? mix(hex, '#1a0b3a', 0.45) : hex;
       const cols = [['#f29e6b', '#6a4c93', '#0e1e33'], ['#3e86c4', '#123050', '#07131c'], ['#ff6b3d', '#7a2c5e', '#140a26'], ['#0a0418', '#03090e']][phase].map(tint);
       const sky = g.createLinearGradient(0, 0, 0, H); cols.forEach((c, k) => sky.addColorStop(k / (cols.length - 1), c));
       g.fillStyle = sky; g.fillRect(0, 0, W, H);
@@ -172,6 +172,15 @@ export function city(view, ctx, tab = 'map') {
           g.fillStyle = `rgba(255,255,255,${(0.25 - cyc) * 1.6})`; g.fillRect(0, 0, W, H);
           const rr = RInt(Math.floor(t / 7)); let p0 = [W * (0.2 + rr.nextFloat() * 0.6), 0];
           for (let k = 0; k < 6; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.12, p0[1] + H * 0.07]; line(p0, p1, '#eaf4ff', 2.5); p0 = p1; } } }
+      } else if (weather === 4) {
+        // aurores magnétiques ondulantes et arcs électriques
+        for (let b = 0; b < 4; b++) {
+          const base = H * (0.06 + b * 0.06); g.strokeStyle = rgba(b % 2 ? '#b98cff' : '#5cffb0', 0.35); g.lineWidth = H * 0.03; g.beginPath();
+          for (let x = 0; x <= W; x += W / 40) { const y = base + Math.sin(x / W * 6 + t * (0.6 + b * 0.2) + b) * H * 0.03; x ? g.lineTo(x, y) : g.moveTo(x, y); }
+          g.stroke();
+        }
+        if (t % 3 < 0.15) { const rr = RInt(Math.floor(t / 3) + 99); let p0 = [rr.nextFloat() * W, H * 0.3 + rr.nextFloat() * H * 0.4];
+          for (let k = 0; k < 5; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.1, p0[1] + (rr.nextFloat() - 0.5) * H * 0.08]; line(p0, p1, '#b98cff', 2); p0 = p1; } }
       } else if (weather === 3) {
         const sd = g.createLinearGradient(0, 0, 0, H); sd.addColorStop(0, 'rgba(201,138,60,.35)'); sd.addColorStop(1, 'rgba(138,90,43,.25)'); g.fillStyle = sd; g.fillRect(0, 0, W, H);
         g.lineWidth = 1.4;

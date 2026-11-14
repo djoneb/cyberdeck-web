@@ -97,3 +97,36 @@
   background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--k) 18%, transparent) 50%, transparent 60%);
   background-size: 250% 100%; animation: hcScan 6s linear infinite; mix-blend-mode: screen; }
 @keyframes hcScan { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* ── Mes decks : piles de cartes obtenues */
+.hc-modes { margin-top: 4px; }
+.hc-deckgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 22px 16px; margin-top: 14px; }
+.hc-deck { display: flex; flex-direction: column; gap: 4px; background: none; border: 0; color: var(--hc-tx); cursor: pointer; text-align: left; padding: 0; font: inherit; }
+.hc-deck b { font-size: 16px; letter-spacing: .04em; margin-top: 6px; color: var(--k); }
+.hc-deck > span { font: 12px var(--hc-mono); color: var(--hc-dim); }
+.hc-deck > i { display: block; height: 3px; background: color-mix(in srgb, var(--k) 20%, transparent); } .hc-deck > i u { display: block; height: 100%; background: var(--k); }
+.hc-dempty { opacity: .45; cursor: default; }
+.hc-stack { position: relative; width: 130px; height: 192px; margin: 14px 0 0 4px; }
+.hc-sc { position: absolute; left: 0; top: 0; width: 260px; height: 384px; transform-origin: 0 0;
+  transform: translate(calc(var(--d) * 10px), calc(var(--d) * -8px)) rotate(calc(var(--d) * 4deg)) scale(.5); transition: transform .3s; pointer-events: none; }
+.hc-sc .hc-card { width: 260px; } .hc-sc .hc-face { box-shadow: 0 10px 26px rgba(0, 0, 0, .7); }
+.hc-deck:hover .hc-sc { transform: translate(calc(var(--d) * 18px), calc(var(--d) * -14px)) rotate(calc(var(--d) * 8deg)) scale(.5); }
+.hc-scq { width: 130px; height: 192px; transform: none; }
+.hc-scq { display: grid; place-items: center; border: 1px dashed color-mix(in srgb, var(--k) 50%, transparent); font: 700 40px var(--hc-mono); color: var(--k); }
+.hc-dkhead { display: flex; align-items: center; gap: 14px; margin: 6px 0 14px; flex-wrap: wrap; }
+.hc-dkhead b { display: block; font-size: 20px; letter-spacing: .06em; } .hc-dkhead span { font: 12px var(--hc-mono); color: var(--hc-dim); }
+.hc-fan { display: flex; gap: 0; overflow-x: auto; padding: 30px 10px 40px; scroll-snap-type: x mandatory; }
+.hc-fanc { flex: none; width: 230px; margin-right: -60px; transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 2deg)); transition: transform .25s, margin .25s; cursor: pointer; scroll-snap-align: center; }
+.hc-fanc .hc-card { pointer-events: none; }
+.hc-fanc:hover { transform: translateY(-22px) rotate(0); margin-right: 6px; z-index: 2; }
+/* ── Carte sortie du deck : manipulation 3D */
+.hc-insp { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 216, 240, .12), rgba(2, 5, 8, .96) 65%); padding: 16px; }
+.hc-istage { width: 100%; flex: 1; display: grid; place-items: center; perspective: 1100px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.hc-istage:active { cursor: grabbing; }
+.hc-icard { width: min(78vw, 340px); }
+.hc-icard .hc-card { transition: transform .2s; pointer-events: none; }
+.hc-icard .hc-inner { transition: none; }
+.hc-icard { filter: drop-shadow(0 18px 40px rgba(0, 0, 0, .7)); }
+.hc-ihint { font: 12px var(--hc-mono); color: var(--hc-dim); letter-spacing: .1em; text-align: center; }
+.hc-ibar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }

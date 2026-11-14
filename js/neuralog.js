@@ -1,6 +1,6 @@
 // Carnet de NEURA : une ligne par jour sur ta journée. Mêmes compteurs (cyberdeck_b9, j<k>_<date>) et même texte que le téléphone.
 import * as S from './save.js';
-import { weather } from './world.js';
+import { segments } from './world.js';
 
 const B9 = 'cyberdeck_b9';
 const pad = (n) => String(n).padStart(2, '0');
@@ -9,12 +9,13 @@ const epoch = (d) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDat
 const get = (k, d) => S.get(B9, `j${k}_${dateStr(d)}`, 0);
 export const active = (d) => ['x', 'g', 'v', 'e', 'c'].some(k => get(k, d) > 0);
 /** Pire météo de la journée : orage > sable > pluie > clair. */
-export function dayWeather(d) { const w = [0, 4, 8, 12, 16, 20].map(h => weather(epoch(d), h)); return [2, 3, 1, 0].find(x => w.includes(x)); }
+export function dayWeather(d) { const w = segments(epoch(d)).map(s => s[2]); return [2, 4, 3, 1, 0].find(x => w.includes(x)); }
 const WEATHER_LINES = [
   ['Ciel clair sur NEO-BXL.', 'Une rare journée sans pluie acide.'],
   ['La pluie acide n\'a pas cessé.', 'Pluie acide sur les néons, comme d\'habitude.'],
   ['Un orage a secoué le réseau.', 'Les éclairs ont fait trembler les antennes.'],
   ['Une tempête de sable a voilé la ville.', 'Le sable des badlands a envahi les rues.'],
+  ['Une tempête magnétique a fait danser les aurores sur la ville.', 'Les implants ont grésillé sous la tempête magnétique.'],
 ];
 const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
 export function text(d) {
