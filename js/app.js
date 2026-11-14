@@ -244,7 +244,7 @@ setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) {
 // Cyberpsychose : la charge neurale avance aussi pendant qu'on joue sur le site
 setInterval(() => { if (!S.hasSave()) return; const c = So.psyTick(); if (c) { popup('CYBERPSYCHOSE', c); ctx.changed(); } }, 30000);
 // Zone qui se débloque : NEURA l'annonce, et elle apparaît dans la ville
-const zoneCheck = () => { if (!S.hasSave()) return; Wd.freshZones().forEach(z => { popup('NEURA // NOUVELLE ZONE · ' + z.name.toUpperCase(), '« ' + (Wd.ZONE_REVEAL[z.id] || 'Nouvelle zone découverte.') + ' »'); ctx.changed(); }); };
+const zoneCheck = () => { if (!S.hasSave()) return; Wd.freshZones().forEach(z => { popup('NEURA // SIGNAL DÉTECTÉ · ' + z.name.toUpperCase(), '« ' + (Wd.ZONE_REVEAL[z.id] || 'Nouvelle zone découverte.') + ' »'); ctx.changed(); }); };
 setInterval(zoneCheck, 15000); setTimeout(zoneCheck, 2000);
 // Dossier d'un contact complété à 100 % : récompense et carte holo « Dossier complet »
 setInterval(() => { if (!S.hasSave()) return; checkDossiers().forEach(id => { const c = Wd.contact(id);

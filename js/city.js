@@ -209,11 +209,11 @@ export function city(view, ctx, tab = 'map') {
     body.querySelector('.reps').innerHTML = Wd.DISTRICTS.map(d => { const r = Wd.rep(d.id), tr = Wd.tier(r), next = [10, 25, 50, 50][tr];
       return `<button class="repd" data-d="${d.id}" style="--c:${d.color}"><span class="mono tiny" style="color:${d.color}">${esc(d.name.toUpperCase())}</span><b>${Wd.TIER_NAMES[tr]}</b><i><u style="width:${Math.min(100, r / next * 100)}%"></u></i><span class="mono tiny" style="color:${d.color}">ⓘ ${Math.min(100, r * 2)} %</span></button>`; }).join('');
     body.querySelectorAll('.repd').forEach(b => b.onclick = () => districtPage(b.dataset.d));
-    const openZ = Wd.ZONES.filter(z => !Wd.zoneLock(z.id)), hiddenZ = Wd.ZONES.length - openZ.length;
+    const openZ = Wd.ZONES.filter(z => Wd.zoneState(z.id) > 0), hiddenZ = Wd.ZONES.length - openZ.length;
     body.querySelector('.zhint').textContent = !hiddenZ ? '' : openZ.length ? `▒▒▒ ${hiddenZ} zone(s) encore inconnue(s)…` : '▒▒▒ Des zones inconnues existent au-delà des quartiers. Ta réputation les révélera…';
-    body.querySelector('.zones').innerHTML = openZ.map(z => { const lk = Wd.zoneLock(z.id), pct = lk ? Wd.zoneUnlockPercent(z.id) : Math.min(100, Wd.rep(z.id) * 2);
-      return `<button class="zcard ${lk ? 'locked' : ''}" data-z="${z.id}" style="--c:${z.color}"><b>${lk ? '🔒' : '◆'} ${esc(z.name.toUpperCase())}</b>
-        <span class="mono tiny dim">${lk ? 'Accès' : 'Réputation'} ${pct} %</span><i><u style="width:${pct}%"></u></i></button>`; }).join('');
+    body.querySelector('.zones').innerHTML = openZ.map(z => { const sig = Wd.zoneState(z.id) === 1, pct = sig ? 0 : Math.min(100, Wd.rep(z.id) * 2);
+      return `<button class="zcard ${sig ? 'signal' : ''}" data-z="${z.id}" style="--c:${z.color}"><b>${sig ? '📡' : '◆'} ${esc(z.name.toUpperCase())}</b>
+        <span class="mono tiny" style="color:${sig ? z.color : C.dim}">${sig ? 'SIGNAL DÉTECTÉ · mission d\'accès' : 'Réputation ' + pct + ' %'}</span><i><u style="width:${pct}%"></u></i></button>`; }).join('');
     body.querySelectorAll('.zcard').forEach(b => b.onclick = () => districtPage(b.dataset.z));
     body.querySelector('#reptxt').textContent = Wd.bunkerUnlocked() ? '☢ Le Bunker Zéro t\'est ouvert : récompenses +50 %.' : `Réputation totale ${Wd.totalRep()}/40 : un lieu secret attend les légendes…`;
     body.querySelector('.places').innerHTML = Wd.PLACES.filter(p => p.id !== 'bunker' || bunker).map(pl => {
@@ -237,14 +237,17 @@ export function city(view, ctx, tab = 'map') {
   // Page d'un quartier : réputation vers les 100 %, son histoire et tous ses lieux
   function districtPage(did) {
     const d = Wd.district(did), q = DOSSIERS.quartiers?.[did]; if (!d) return;
-    const zone = Wd.isZone(did), zlock = zone ? Wd.zoneLock(did) : null;
+    const zone = Wd.isZone(did), zsig = zone && Wd.zoneState(did) === 1, zlock = zone ? (Wd.zoneLock(did) || (zsig ? 'Signal détecté : termine la mission d\'accès pour entrer.' : null)) : null;
+    const zq = zsig ? Wd.zoneQuest(did) : null, zrun = zsig && Wd.active().some(a => a.exp.id === 'zone_' + did);
     const rep = Wd.rep(did), pct = Math.min(100, rep * 2), tr = Wd.tier(rep), bunker = Wd.bunkerUnlocked();
     const needs = [10, 25, 50], labels = ['Les origines', 'Ses règles', 'Ce qu\'il cache'];
     const lines = q ? [{ label: 'Le quartier', text: q.desc }, ...needs.map((n, i) => ({ label: labels[i], text: rep >= n ? q.hist[i] : null, how: `${n} de réputation` }))] : [];
     const places = [...Wd.PLACES, ...Wd.ZONE_PLACES].filter(p => Wd.spot(p.id)?.district === did);
     const ov = document.createElement('div'); ov.className = 'overlay';
     ov.innerHTML = `<div class="encounter dpage" style="--c:${d.color}"><div class="mono small dim">${zone ? `ZONE · BONUS +${Wd.ZONE_BONUS[did] || 0} % DANS SES LIEUX` : 'QUARTIER DE NEO-BXL'}</div><h2 class="glitch" style="color:${d.color};margin:0">${esc(d.name.toUpperCase())}</h2>
-      ${zlock ? `<div class="zlock"><b style="color:${d.color}">🔒 ZONE VERROUILLÉE · ${Wd.zoneUnlockPercent(did)} %</b><div>${esc(zlock)}</div></div>` : ''}
+      ${zlock ? `<div class="zlock"><b style="color:${d.color}">${zq ? '📡 SIGNAL DÉTECTÉ' : '🔒 ZONE VERROUILLÉE · ' + Wd.zoneUnlockPercent(did) + ' %'}</b><div>${esc(zlock)}</div>
+        ${zq ? `<div class="dim small">Mission « ${esc(zq.title)} » avec ${esc(Wd.contact(zq.contact)?.name || '')} · ${zq.minutes} min</div>
+        <button class="btn ${zrun ? '' : 'main'}" id="zquest">${zrun ? 'Mission en cours (voir Expéditions)' : '📡 Lancer la mission d\'accès'}</button>` : ''}</div>` : ''}
       <div class="dzone"><b style="color:${d.color}">${pct} %</b><div><div class="mono tiny dim">RÉPUTATION DE LA ZONE</div><div>${Wd.TIER_NAMES[tr]} · ${rep} / 50 points</div></div></div>
       <div class="psybar"><i style="width:${pct}%;background:${d.color}"></i></div>
       <div class="mono tiny dsteps">${[[10, 'Connu·e'], [25, 'Respecté·e'], [50, 'Légende']].map(([n, l]) => `<span style="color:${rep >= n ? d.color : C.dim}">${rep >= n ? '✓' : '○'} ${l} (${n})</span>`).join('')}</div>
@@ -262,6 +265,7 @@ export function city(view, ctx, tab = 'map') {
     document.body.appendChild(ov);
     const close = () => ov.remove();
     ov.querySelector('#dclose').onclick = close; ov.onclick = (e) => { if (e.target === ov) close(); };
+    const zqb = ov.querySelector('#zquest'); if (zqb) zqb.onclick = () => { close(); if (zrun) { tab = 'exp'; render(); } else zoneIntro(did); };
     ov.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if (!b.dataset.go) { ctx.toast(zlock ? 'Zone verrouillée : ' + zlock : 'Lieu secret : il faut 40 de réputation au total'); return; } close(); go(b.dataset.go); });
     ov.querySelectorAll('.pinfo').forEach(b => b.onclick = () => placeFile(b.dataset.file));
   }
@@ -342,13 +346,26 @@ export function city(view, ctx, tab = 'map') {
     ov.querySelector('#sno').onclick = () => ov.remove();
     ov.querySelector('#sgo').onclick = () => { ov.remove(); const err = Wd.startChainEp(cid); ctx.toast(err || `En route : ${ch.place} · ${ch.minutes} min`); ctx.changed(); render(); };
   }
+  function zoneIntro(zid) {
+    const q = Wd.zoneQuest(zid), c = Wd.contact(q?.contact), z = Wd.district(zid); if (!q || !c) return;
+    if (Wd.active().length) { ctx.toast('Une seule expédition à la fois : termine celle en cours'); return; }
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter" style="--c:${z.color}"><div class="mono small" style="color:${z.color}">MESSAGE DE ${esc(c.name.toUpperCase())}</div>
+      <div class="shead"><span class="pf"></span><div><div class="mono tiny" style="color:${z.color}">📡 MISSION D'ACCÈS · ${esc(z.name.toUpperCase())}</div><b>${esc(q.title)}</b><div class="mono tiny dim">${esc(q.place)} · ${q.minutes} min</div></div></div>
+      <p>« ${esc(q.intro)} »</p><div class="dim small">3 décisions t'attendent en route. Réussis la mission pour ouvrir la zone.</div>
+      <button class="btn main" id="sgo">Accepter la mission</button><button class="btn" id="sno">Plus tard</button></div>`;
+    ov.querySelector('.pf').appendChild(portraitCanvas(c, 64));
+    document.body.appendChild(ov);
+    ov.querySelector('#sno').onclick = () => ov.remove();
+    ov.querySelector('#sgo').onclick = () => { ov.remove(); const err = Wd.startZoneQuest(zid); ctx.toast(err || `En route : ${q.place} · ${q.minutes} min`); ctx.changed(); tab = 'exp'; render(); };
+  }
   function storyEnd(r) {
     const c = Wd.contact(r.contactId);
     const ov = document.createElement('div'); ov.className = 'overlay';
-    ov.innerHTML = `<div class="encounter" style="--c:${r.win ? C.green : C.red}"><div class="mono small" style="color:${r.win ? C.green : C.red}">${r.win ? (r.last ? 'HISTOIRE TERMINÉE' : 'ÉPISODE RÉUSSI') : 'ÉPISODE RATÉ'}</div>
+    ov.innerHTML = `<div class="encounter" style="--c:${r.win ? C.green : C.red}"><div class="mono small" style="color:${r.win ? C.green : C.red}">${r.zone ? (r.win ? 'ZONE OUVERTE' : 'MISSION D\'ACCÈS RATÉE') : r.win ? (r.last ? 'HISTOIRE TERMINÉE' : 'ÉPISODE RÉUSSI') : 'ÉPISODE RATÉ'}</div>
       <div class="shead"><span class="pf"></span><b style="color:${r.win ? C.green : C.red}">${esc(c?.name.toUpperCase() || '')}</b></div>
       <p>« ${esc(r.text)} »</p><div class="mono small" style="color:${C.amber}">${esc(r.rewards)}</div>
-      ${r.win ? '' : '<div class="dim small">Récompense réduite de moitié. Tu peux retenter l\'épisode.</div>'}<button class="btn main" id="sok">Fermer</button></div>`;
+      ${r.win ? '' : `<div class="dim small">Récompense réduite de moitié. Tu peux retenter ${r.zone ? 'la mission depuis la page de la zone' : 'l\'épisode'}.</div>`}<button class="btn main" id="sok">Fermer</button></div>`;
     if (c) ov.querySelector('.pf').appendChild(portraitCanvas(c, 64, r.win && r.last));
     document.body.appendChild(ov);
     ov.querySelector('#sok').onclick = () => ov.remove();

@@ -82,16 +82,16 @@ export function zoneLock(id) {
 }
 /** Message de NEURA quand une zone se révèle (mêmes textes que le téléphone). */
 export const ZONE_REVEAL = {
-  rouillebourg: 'Nouvelles infos : ta réputation t\'ouvre Rouillebourg, la zone industrielle. Les usines dorment le jour… et dansent la nuit.',
-  badlands: 'Rook vient de m\'envoyer des coordonnées : son convoi peut t\'emmener dans les Badlands. Prépare-toi au sable.',
-  necropole: 'Vex et Ivana m\'ont transmis un accès : la Nécropole Nord. Elle n\'ouvre ses portes que la nuit.',
-  tour: 'Ta réputation de légende a fait le tour de la ville. J\'ai trouvé un accès à la Tour Kurogane. Sois prudent·e.',
-  aurore: 'Une invitation vient d\'arriver… Nova Prime, la ville suspendue. On ne monte là-haut que lorsqu\'on est respecté partout.',
+  rouillebourg: 'Signal détecté : Rouillebourg, la zone industrielle. Ta réputation a fait du bruit là-bas. Lou peut t\'y introduire.',
+  badlands: 'Signal détecté : les Badlands. Rook m\'envoie des coordonnées, son convoi peut t\'emmener dans le désert.',
+  necropole: 'Signal détecté : la Nécropole Nord. Vex et Ivana ont obtenu un passage, de nuit seulement.',
+  tour: 'Signal détecté : la Tour Kurogane. Kenji a un badge à ton nom. Sois prudent·e.',
+  aurore: 'Signal détecté : Nova Prime, la ville suspendue. La Veuve a une invitation pour toi.',
 };
-/** Zones débloquées mais pas encore annoncées : on les marque comme vues. */
+/** Zones dont le signal vient d'être détecté (pas encore annoncées) : on les marque. */
 export function freshZones() {
-  const fresh = ZONES.filter(z => !zoneLock(z.id) && !S.get(B9, 'zseen_' + z.id, false));
-  fresh.forEach(z => S.setB(B9, 'zseen_' + z.id, true)); if (fresh.length) S.persist();
+  const fresh = ZONES.filter(z => zoneState(z.id) === 1 && !S.get(B9, 'zsig_' + z.id, false));
+  fresh.forEach(z => S.setB(B9, 'zsig_' + z.id, true)); if (fresh.length) S.persist();
   return fresh;
 }
 export function zoneUnlockPercent(id) {
@@ -160,7 +160,8 @@ export function visit(id) {
   const pl = place(id), sp = spot(id);
   if (!pl) return { error: 'Lieu inconnu' };
   if (id === 'bunker' && !bunkerUnlocked()) return { error: 'Accès refusé. Il faut plus de réputation dans les quartiers.' };
-  if (sp && isZone(sp.district)) { const lk = zoneLock(sp.district); if (lk) return { error: 'Zone verrouillée : ' + lk }; }
+  if (sp && isZone(sp.district)) { const lk = zoneLock(sp.district); if (lk) return { error: 'Zone verrouillée : ' + lk };
+    if (zoneState(sp.district) < 2) return { error: 'Termine d\'abord la mission d\'accès à cette zone' }; }
   if (sp && !isOpen(sp)) return { error: 'Fermé. Ouvert ' + hoursLabel(sp) };
   const left = cooldownLeft(id);
   if (left > 0) return { error: `Rien de neuf ici. Reviens dans ${Math.floor(left / 60000) + 1} min` };
@@ -221,8 +222,16 @@ export function choose(placeId, e, idx) {
 export const expXp = (e) => e.minutes <= 15 ? 30 : e.minutes <= 20 ? 40 : e.minutes <= 30 ? 60 : 120;
 export const expEddies = (e) => Math.floor(expXp(e) / 2);
 const expAff = (e) => e.minutes >= 60 ? 6 : 3;
+// ── Missions d'accès aux zones (« zone_<id> »), mêmes règles que le téléphone
+export const zoneQuest = (zid) => STORIES.zones?.[zid] || null;
+export const zoneOf = (id) => id.startsWith('zone_') ? id.slice(5) : null;
+export function zoneExp(zid) { const q = zoneQuest(zid); return q ? { id: 'zone_' + zid, contactId: q.contact, title: 'Accès · ' + q.title, place: q.place, minutes: q.minutes, brief: q.intro, report: q.win } : null; }
+/** 0 cachée, 1 signal détecté (mission d'accès à faire), 2 ouverte. Les zones déjà découvertes avant (« zseen_ ») restent ouvertes. */
+export function zoneState(id) { if (zoneLock(id)) return 0; return (S.get(B9, 'zopen_' + id, false) || S.get(B9, 'zseen_' + id, false)) ? 2 : 1; }
+export function startZoneQuest(zid) { const e = zoneExp(zid); return e ? startExpedition(e) : 'Mission inconnue'; }
 export function expById(id) {
   const e = EXPEDITIONS.find(x => x.id === id); if (e) return e;
+  const z = zoneOf(id); if (z) return zoneExp(z);
   const p = parseChain(id); if (!p) return null;
   const ep = CHAINS[p[0]]?.[p[1]]; return ep ? chainExp(p[0], p[1], ep) : null;
 }
@@ -256,7 +265,7 @@ const evKey = (a) => `${a.exp.id}@${a.end}`;
 export const expEvent = (a) => EXP_EVENTS[(hashCode(evKey(a)) & 0x7fffffff) % EXP_EVENTS.length];
 // ── Épisodes d'histoire scénarisés (mêmes règles et clés que le téléphone) : 3 décisions, 4 points sur 6 = réussi
 export const storyEp = (cid, n) => STORIES[cid]?.[n] || null;
-export const storyForExp = (a) => { const p = parseChain(a.exp.id); return p ? storyEp(p[0], p[1]) : null; };
+export const storyForExp = (a) => { const p = parseChain(a.exp.id); if (p) return storyEp(p[0], p[1]); const z = zoneOf(a.exp.id); return z ? zoneQuest(z) : null; };
 export const storyAnswer = (a, b) => S.get(B9, `sb_${evKey(a)}_${b}`, -1);
 export function storyChoose(a, b, i) { S.setI(B9, `sb_${evKey(a)}_${b}`, i); S.persist(); }
 export function storyPending(a, now = Date.now()) {
@@ -267,7 +276,7 @@ export function storyPending(a, now = Date.now()) {
 export const storyAllAnswered = (a) => { const ep = storyForExp(a); return !ep || ep.beats.every((_, b) => storyAnswer(a, b) >= 0); };
 export function storyScore(a) { const ep = storyForExp(a); if (!ep) return 0; return ep.beats.reduce((s, bt, b) => { const i = storyAnswer(a, b); return s + (i >= 0 ? bt.c[i][1] : 0); }, 0); }
 export function expEventState(a, now = Date.now()) {
-  if (parseChain(a.exp.id)) return 0;
+  if (parseChain(a.exp.id) || zoneOf(a.exp.id)) return 0;
   if (S.get(B9, 'ee_' + evKey(a), -1) >= 0) return 2;
   return progress(a, now) >= 0.5 && now < a.end ? 1 : 0;
 }
@@ -286,9 +295,10 @@ export function targetSpot(a, spots) { return spots[(hashCode(a.exp.place) & 0x7
 /** Encaisser une expédition terminée. Renvoie le message de fin. */
 export function claimExpedition(a) {
   if (Date.now() < a.end || !active().some(x => x.exp.id === a.exp.id)) return null;
-  const pc = parseChain(a.exp.id);
-  if (pc && !storyAllAnswered(a)) return { error: 'Prends d\'abord tes décisions dans l\'histoire' };
-  const win = !pc || storyScore(a) >= 4;
+  const pc = parseChain(a.exp.id), zq = zoneOf(a.exp.id);
+  if ((pc || zq) && !storyAllAnswered(a)) return { error: 'Prends d\'abord tes décisions dans l\'histoire' };
+  const win = (!pc && !zq) || storyScore(a) >= 4;
+  if (zq && win) S.setB(B9, 'zopen_' + zq, true);
   saveActive(active().filter(x => x.exp.id !== a.exp.id));
   S.setI(B8, 'completed', S.get(B8, 'completed', 0) + 1);
   const mult = S.get(B9, 'ee_' + evKey(a), 100);
@@ -311,6 +321,9 @@ export function claimExpedition(a) {
   if (S.get(B8, 'completed', 0) >= 10) S.unlock('expeditions_10');
   S.persist();
   const who = contact(a.exp.contactId)?.name || a.runner || 'Runner';
+  if (zq) { const q = zoneQuest(zq);
+    return { story: true, zone: true, win, last: win, contactId: a.exp.contactId, text: (win ? q?.win : q?.lose) || a.exp.report,
+      rewards: `+${xp} XP · +${cash} €$` + (win ? ' · nouvelle zone ouverte : ' + (district(zq)?.name || '') : '') }; }
   if (pc) { const ep = storyEp(pc[0], pc[1]);
     return { story: true, win, last: chainEnd, contactId: pc[0], text: (win ? ep?.win : ep?.lose) || a.exp.report,
       rewards: `+${xp} XP · +${cash} €$` + (chainEnd ? ' · histoire terminée : +150 XP · +200 €$' : '') }; }
