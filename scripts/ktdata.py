@@ -96,4 +96,5 @@ with open(sys.argv[1],'w') as f:
     for k,v in out.items(): f.write(f'export const {k} = {json.dumps(v,ensure_ascii=False)};\n')
     # Dossiers des contacts (wiki) : même fichier que l'appli
     f.write('export const DOSSIERS = ' + json.dumps(json.load(open(D + '../../../../../assets/dossiers.json')), ensure_ascii=False) + ';\n')
+    f.write('export const STORIES = ' + json.dumps(json.load(open(D + '../../../../../assets/stories.json')), ensure_ascii=False) + ';\n')
 print({k:len(v) for k,v in out.items()})

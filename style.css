@@ -440,3 +440,7 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .dsteps { display: flex; gap: 14px; flex-wrap: wrap; margin: 2px 0 6px; }
 .dplace { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; } .dplace .place { width: 100%; min-height: 0; }
 .reps .repd { border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); padding: 10px; display: flex; flex-direction: column; background: none; gap: 2px; }
+/* Épisodes d'histoire */
+.expev.story { border-color: color-mix(in srgb, var(--amber) 60%, transparent); }
+.sbdone { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.shead { display: flex; gap: 12px; align-items: center; margin: 8px 0; } .shead b { font-size: 19px; }

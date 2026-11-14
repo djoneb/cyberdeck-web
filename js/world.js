@@ -3,7 +3,7 @@ import * as S from './save.js';
 import { R, KRandom, hashCode, today, epochDay } from './krand.js';
 import { chromeActive, itemActive } from './social.js';
 import * as Q from './quests.js';
-import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED } from './gamedata.js';
+import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED, STORIES } from './gamedata.js';
 
 export { CONTACTS, PLACES, DISTRICTS, SPOTS, CHAINS, CHAIN_NEED };
 const HP = 'cyberdeck_holophone', B8 = 'cyberdeck_b8', B9 = 'cyberdeck_b9';
@@ -216,7 +216,20 @@ export function startExpedition(e, runner = null) {
 }
 const evKey = (a) => `${a.exp.id}@${a.end}`;
 export const expEvent = (a) => EXP_EVENTS[(hashCode(evKey(a)) & 0x7fffffff) % EXP_EVENTS.length];
+// ── Épisodes d'histoire scénarisés (mêmes règles et clés que le téléphone) : 3 décisions, 4 points sur 6 = réussi
+export const storyEp = (cid, n) => STORIES[cid]?.[n] || null;
+export const storyForExp = (a) => { const p = parseChain(a.exp.id); return p ? storyEp(p[0], p[1]) : null; };
+export const storyAnswer = (a, b) => S.get(B9, `sb_${evKey(a)}_${b}`, -1);
+export function storyChoose(a, b, i) { S.setI(B9, `sb_${evKey(a)}_${b}`, i); S.persist(); }
+export function storyPending(a, now = Date.now()) {
+  const ep = storyForExp(a); if (!ep) return null;
+  for (let b = 0; b < ep.beats.length; b++) { if (storyAnswer(a, b) >= 0) continue; return (now >= a.end || progress(a, now) >= (b + 1) / 4) ? b : null; }
+  return null;
+}
+export const storyAllAnswered = (a) => { const ep = storyForExp(a); return !ep || ep.beats.every((_, b) => storyAnswer(a, b) >= 0); };
+export function storyScore(a) { const ep = storyForExp(a); if (!ep) return 0; return ep.beats.reduce((s, bt, b) => { const i = storyAnswer(a, b); return s + (i >= 0 ? bt.c[i][1] : 0); }, 0); }
 export function expEventState(a, now = Date.now()) {
+  if (parseChain(a.exp.id)) return 0;
   if (S.get(B9, 'ee_' + evKey(a), -1) >= 0) return 2;
   return progress(a, now) >= 0.5 && now < a.end ? 1 : 0;
 }
@@ -235,6 +248,9 @@ export function targetSpot(a, spots) { return spots[(hashCode(a.exp.place) & 0x7
 /** Encaisser une expédition terminée. Renvoie le message de fin. */
 export function claimExpedition(a) {
   if (Date.now() < a.end || !active().some(x => x.exp.id === a.exp.id)) return null;
+  const pc = parseChain(a.exp.id);
+  if (pc && !storyAllAnswered(a)) return { error: 'Prends d\'abord tes décisions dans l\'histoire' };
+  const win = !pc || storyScore(a) >= 4;
   saveActive(active().filter(x => x.exp.id !== a.exp.id));
   S.setI(B8, 'completed', S.get(B8, 'completed', 0) + 1);
   const mult = S.get(B9, 'ee_' + evKey(a), 100);
@@ -242,21 +258,24 @@ export function claimExpedition(a) {
   S.setI(B8, 'xc_' + a.exp.id, S.get(B8, 'xc_' + a.exp.id, 0) + 1);
   if (mult === 160) S.setB(B8, 'xr_' + a.exp.id, true);
   const nk = `neg_${a.exp.id}@${a.end}`; if (S.get(B8, nk, false)) { S.setI(B8, 'xn_' + a.exp.id, S.get(B8, 'xn_' + a.exp.id, 0) + 1); delete S.raw(B8)[nk]; }
-  const xp = Math.floor(expXp(a.exp) * mult / 100); S.addXp(xp);
-  let cash = Math.floor(expEddies(a.exp) * mult / 100); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2);
+  const xp = Math.floor(Math.floor(expXp(a.exp) * mult / 100) / (win ? 1 : 2)); S.addXp(xp);
+  let cash = Math.floor(Math.floor(expEddies(a.exp) * mult / 100) / (win ? 1 : 2)); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2);
   if (weatherAt(a.start) === 3) { cash = Math.floor(cash * 7 / 5); Q.challenge('sand_exp'); }
   logBump('e'); S.addEddies(cash);
   addRep(DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length].id, 2);
   let chainEnd = false;
-  const p = parseChain(a.exp.id);
+  const p = win ? parseChain(a.exp.id) : null;
   if (p) {
     S.setI(B9, 'chain_' + p[0], p[1] + 1);
     if (p[1] + 1 >= (CHAINS[p[0]]?.length || 3)) { chainEnd = true; S.addXp(150); S.addEddies(200); addAffinity(p[0], 10); S.unlock('chain_done'); }
   }
-  if (a.exp.contactId !== 'runner') addAffinity(a.exp.contactId, expAff(a.exp));
+  if (a.exp.contactId !== 'runner') addAffinity(a.exp.contactId, win ? expAff(a.exp) : 2);
   if (S.get(B8, 'completed', 0) >= 10) S.unlock('expeditions_10');
   S.persist();
   const who = contact(a.exp.contactId)?.name || a.runner || 'Runner';
+  if (pc) { const ep = storyEp(pc[0], pc[1]);
+    return { story: true, win, last: chainEnd, contactId: pc[0], text: (win ? ep?.win : ep?.lose) || a.exp.report,
+      rewards: `+${xp} XP · +${cash} €$` + (chainEnd ? ' · histoire terminée : +150 XP · +200 €$' : '') }; }
   return { title: chainEnd ? 'HISTOIRE TERMINÉE · +150 XP · +200 €$' : `EXPÉDITION RÉUSSIE · +${xp} XP` + (mult !== 100 ? ` (${mult > 100 ? '+' : ''}${mult - 100} %)` : ''), text: `${who} : « ${a.exp.report} »` };
 }
 export function fmtLeft(ms) {

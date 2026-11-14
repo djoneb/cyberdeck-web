@@ -310,6 +310,42 @@ export function city(view, ctx, tab = 'map') {
     document.body.appendChild(ov);
   }
 
+  // ─────────────── Épisodes d'histoire : décisions, message d'ouverture et clôture
+  function storyBox(a, now) {
+    const ep = Wd.storyForExp(a); if (!ep) return '';
+    const pend = Wd.storyPending(a, now), done = ep.beats.filter((_, b) => Wd.storyAnswer(a, b) >= 0).length;
+    return `<div class="expev story"><div class="mono tiny" style="color:${C.amber}">✦ HISTOIRE · DÉCISIONS ${done}/3</div>
+      ${ep.beats.map((bt, b) => { const ans = Wd.storyAnswer(a, b);
+        if (ans >= 0) return `<div class="sbdone"><span class="dim small">${esc(bt.t)}</span><span class="small">› ${esc(bt.c[ans][0])} — ${esc(bt.c[ans][2])}</span></div>`;
+        if (b === pend) return `<b>${esc(bt.t)}</b>${bt.c.map((c, i) => `<button data-sb="${b}:${i}" style="--c:${C.cyan}">› ${esc(c[0])}</button>`).join('')}`;
+        return `<div class="mono tiny dim">◌ Décision ${b + 1} : à ${(b + 1) * 25} % du trajet</div>`; }).join('')}</div>`;
+  }
+  function storyIntro(cid) {
+    const n = Wd.chainProgress(cid), ep = Wd.storyEp(cid, n), ch = Wd.CHAINS[cid]?.[n], c = Wd.contact(cid);
+    if (!ch || !c) return;
+    if (Wd.active().length) { ctx.toast('Une seule expédition à la fois : termine celle en cours'); return; }
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter" style="--c:${C.amber}"><div class="mono small" style="color:${C.amber}">MESSAGE DE ${esc(c.name.toUpperCase())}</div>
+      <div class="shead"><span class="pf"></span><div><div class="mono tiny" style="color:${C.amber}">ÉPISODE ${n + 1}/3</div><b>${esc(ch.title)}</b><div class="mono tiny dim">${esc(ch.place)} · ${ch.minutes} min</div></div></div>
+      <p>« ${esc(ep?.intro || ch.brief)} »</p><div class="dim small">Pendant l'expédition, tu devras prendre 3 décisions. Elles décideront de la réussite de l'épisode.</div>
+      <button class="btn main" id="sgo">Accepter la mission</button><button class="btn" id="sno">Plus tard</button></div>`;
+    ov.querySelector('.pf').appendChild(portraitCanvas(c, 64));
+    document.body.appendChild(ov);
+    ov.querySelector('#sno').onclick = () => ov.remove();
+    ov.querySelector('#sgo').onclick = () => { ov.remove(); const err = Wd.startChainEp(cid); ctx.toast(err || `En route : ${ch.place} · ${ch.minutes} min`); ctx.changed(); render(); };
+  }
+  function storyEnd(r) {
+    const c = Wd.contact(r.contactId);
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter" style="--c:${r.win ? C.green : C.red}"><div class="mono small" style="color:${r.win ? C.green : C.red}">${r.win ? (r.last ? 'HISTOIRE TERMINÉE' : 'ÉPISODE RÉUSSI') : 'ÉPISODE RATÉ'}</div>
+      <div class="shead"><span class="pf"></span><b style="color:${r.win ? C.green : C.red}">${esc(c?.name.toUpperCase() || '')}</b></div>
+      <p>« ${esc(r.text)} »</p><div class="mono small" style="color:${C.amber}">${esc(r.rewards)}</div>
+      ${r.win ? '' : '<div class="dim small">Récompense réduite de moitié. Tu peux retenter l\'épisode.</div>'}<button class="btn main" id="sok">Fermer</button></div>`;
+    if (c) ov.querySelector('.pf').appendChild(portraitCanvas(c, 64, r.win && r.last));
+    document.body.appendChild(ov);
+    ov.querySelector('#sok').onclick = () => ov.remove();
+  }
+
   // ─────────────── Expéditions
   function expeditions(body) {
     const paint = () => {
@@ -320,7 +356,7 @@ export function city(view, ctx, tab = 'map') {
             ${done ? `<button class="claim" data-claim="${a.exp.id}">+${Wd.expXp(a.exp)} XP ›</button>` : `<span class="mono" style="color:${C.cyan}">${Wd.fmtLeft(a.end - now)}</span>`}</div>
             <i class="pbar"><u style="width:${Wd.progress(a, now) * 100}%;background:${done ? C.green : C.cyan}"></u></i>
             ${evs === 1 ? `<div class="expev"><div class="mono tiny" style="color:${C.amber}">⚠ IMPRÉVU</div><b>${esc(ev.text)}</b>
-              <button data-ev="0" style="--c:${C.cyan}">› ${esc(ev.safe)} (prudent · +10 %)</button><button data-ev="1" style="--c:${C.red}">› ${esc(ev.risky)} (risqué · +60 % ou −30 %)</button></div>` : ''}</div>`; }).join('')}
+              <button data-ev="0" style="--c:${C.cyan}">› ${esc(ev.safe)} (prudent · +10 %)</button><button data-ev="1" style="--c:${C.red}">› ${esc(ev.risky)} (risqué · +60 % ou −30 %)</button></div>` : ''}${storyBox(a, now)}</div>`; }).join('')}
         <div class="mono tiny dim" style="margin-top:14px">CONTRATS DU JOUR</div>
         ${Wd.offers().map(e => { const c = Wd.contact(e.contactId), taken = Wd.takenToday(e.id);
           return `<div class="offer"><span class="pf" data-c="${e.contactId}"></span><div class="om"><b style="color:${taken ? C.dim : '#e8f4f8'}">${esc(e.title)}</b>
@@ -335,14 +371,16 @@ export function city(view, ctx, tab = 'map') {
         <p class="dim small" style="margin-top:10px">Lance une expédition, vis ta vie, reviens encaisser. Le temps tourne même onglet fermé. Les runners croisés en ville en proposent d'autres.</p></div>`;
       body.querySelectorAll('.pf').forEach(p => { const c = Wd.contact(p.dataset.c); if (c) p.appendChild(portraitCanvas(c, p.classList.contains('small') ? 34 : 38)); });
       body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const e = Wd.offers().find(x => x.id === b.dataset.go); const err = Wd.startExpedition(e); ctx.toast(err || `En route : ${e.place} · ${e.minutes} min`); ctx.changed(); render(); });
-      body.querySelectorAll('[data-chain]').forEach(b => b.onclick = () => { const err = Wd.startChainEp(b.dataset.chain); ctx.toast(err || 'Épisode lancé'); ctx.changed(); render(); });
+      body.querySelectorAll('[data-chain]').forEach(b => b.onclick = () => storyIntro(b.dataset.chain));
       body.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => { const a = Wd.active().find(x => x.exp.id === b.dataset.claim); const r = a && Wd.claimExpedition(a);
-        if (r) { ctx.popup(r.title, r.text); ctx.changed(); render(); } });
+        if (!r) return; if (r.error) { ctx.toast(r.error); return; }
+        if (r.story) storyEnd(r); else ctx.popup(r.title, r.text); ctx.changed(); render(); });
+      body.querySelectorAll('[data-sb]').forEach(b => b.onclick = () => { const a = Wd.active()[0]; const [bt, i] = b.dataset.sb.split(':').map(Number); Wd.storyChoose(a, bt, i); paint(); });
       body.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => { const a = Wd.active()[0]; ctx.toast(Wd.resolveExpEvent(a, b.dataset.ev === '1')); paint(); });
     };
     paint();
     // Le compte à rebours avance ; on ne redessine pas pendant qu'un imprévu attend une réponse.
-    tick = setInterval(() => { const a = Wd.active()[0]; if (a && Wd.expEventState(a) !== 1) paint(); else if (a) { const s = body.querySelector('.arow .mono'); if (s) s.textContent = Wd.fmtLeft(a.end - Date.now()); } }, 1000);
+    tick = setInterval(() => { const a = Wd.active()[0]; if (a && Wd.expEventState(a) !== 1 && Wd.storyPending(a) === null) paint(); else if (a) { const s = body.querySelector('.arow .mono'); if (s) s.textContent = Wd.fmtLeft(a.end - Date.now()); } }, 1000);
   }
 
   render();
