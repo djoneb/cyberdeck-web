@@ -404,8 +404,10 @@ function gallery(root, opts) {
     grid.innerHTML = html || '<p class="hc-lead">Aucune carte obtenue pour l\'instant. Monte l\'amitié de tes contacts pour la première.</p>';
     paintCanvases(grid);
   };
-  root.querySelector('.hc-filters').addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; filter = b.dataset.f;
-    root.querySelectorAll('.hc-filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
+  // filtres de la collection complète (pas les boutons Decks / Collection ni le rangement des decks)
+  const filters = root.querySelector('.hc-coll .hc-filters');
+  filters.addEventListener('click', (ev) => { const b = ev.target.closest('button[data-f]'); if (!b) return; filter = b.dataset.f;
+    filters.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
   wireCards(grid);
   // ── Mes decks : les cartes obtenues, empilées par personnage, famille ou rareté
   const decksBox = root.querySelector('.hc-decks'), collBox = root.querySelector('.hc-coll');
