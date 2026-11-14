@@ -248,6 +248,7 @@ export function city(view, ctx, tab = 'map') {
       ${zlock ? `<div class="zlock"><b style="color:${d.color}">${zq ? '📡 SIGNAL DÉTECTÉ' : '🔒 ZONE VERROUILLÉE · ' + Wd.zoneUnlockPercent(did) + ' %'}</b><div>${esc(zlock)}</div>
         ${zq ? `<div class="dim small">Mission « ${esc(zq.title)} » avec ${esc(Wd.contact(zq.contact)?.name || '')} · ${zq.minutes} min</div>
         <button class="btn ${zrun ? '' : 'main'}" id="zquest">${zrun ? 'Mission en cours (voir Expéditions)' : '📡 Lancer la mission d\'accès'}</button>` : ''}</div>` : ''}
+      ${zone && !zlock ? `<iframe class="zmap" src="zonemaps/index.html?zone=${did}" title="Carte de la zone" loading="lazy" style="--c:${d.color}"></iframe>` : ''}
       <div class="dzone"><b style="color:${d.color}">${pct} %</b><div><div class="mono tiny dim">RÉPUTATION DE LA ZONE</div><div>${Wd.TIER_NAMES[tr]} · ${rep} / 50 points</div></div></div>
       <div class="psybar"><i style="width:${pct}%;background:${d.color}"></i></div>
       <div class="mono tiny dsteps">${[[10, 'Connu·e'], [25, 'Respecté·e'], [50, 'Légende']].map(([n, l]) => `<span style="color:${rep >= n ? d.color : C.dim}">${rep >= n ? '✓' : '○'} ${l} (${n})</span>`).join('')}</div>
@@ -263,7 +264,10 @@ export function city(view, ctx, tab = 'map') {
           ${secret ? '' : `<button class="pinfo mono tiny" data-file="${pl.id}" style="--c:${pl.color}">ⓘ INFORMATIONS<span>fiche ${filePct(pl.id)} %</span></button>`}</div>`; }).join('')}
       <button class="btn" id="dclose">Fermer</button></div>`;
     document.body.appendChild(ov);
-    const close = () => ov.remove();
+    // la carte animée (iframe) envoie le lieu touché
+    const onMsg = (e) => { const id = e.data && e.data.cdVisit; if (typeof id === 'string' && Wd.place(id)) { close(); go(id); } };
+    window.addEventListener('message', onMsg);
+    const close = () => { window.removeEventListener('message', onMsg); ov.remove(); };
     ov.querySelector('#dclose').onclick = close; ov.onclick = (e) => { if (e.target === ov) close(); };
     const zqb = ov.querySelector('#zquest'); if (zqb) zqb.onclick = () => { close(); if (zrun) { tab = 'exp'; render(); } else zoneIntro(did); };
     ov.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if (!b.dataset.go) { ctx.toast(zlock ? 'Zone verrouillée : ' + zlock : 'Lieu secret : il faut 40 de réputation au total'); return; } close(); go(b.dataset.go); });
