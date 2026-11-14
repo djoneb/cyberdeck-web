@@ -204,6 +204,9 @@ function cardHtml(c, owned, fresh) {
   if (c.art === 'portrait') art = `<canvas class="hc-big" width="300" height="300" data-portrait="${c.contact}" data-rar="${c.rar}" data-tier="${c.tier}"></canvas>`;
   else if (c.art === 'friend') art = `<canvas class="hc-fx" width="300" height="200" data-fx="${c.rar}" data-tier="${c.tier}" data-seed="${c.no * 37}"></canvas><svg class="hc-g" viewBox="0 0 100 100" aria-hidden="true">${G[c.glyph] || ''}</svg><canvas class="hc-medal" width="72" height="72" data-mini="${c.contact}"></canvas>`;
   else art = `<svg class="hc-g" viewBox="0 0 100 100" aria-hidden="true">${G[c.glyph] || ''}</svg>`;
+  // Illustration retouchée (cards/<id>.webp) : remplace le dessin vectoriel quand elle existe
+  const photo = typeof window !== 'undefined' && window.HC_PHOTOS !== false;
+  if (photo) art = `<img class="hc-photo" src="${(typeof window !== 'undefined' && window.HC_IMG) || 'cards/'}${c.id}.webp" alt="" loading="lazy" decoding="async" onerror="this.remove()">${art}`;
   const who = ct ? `<div class="hc-who"><canvas width="68" height="68" data-mini="${c.contact}"></canvas><div><b>${esc(ct.name.toUpperCase())}</b><span>${esc(ct.role)}</span></div></div>`
     : c.runner ? '<div class="hc-who"><div><b>RUNNER INCONNU</b><span>Croisé·e en ville</span></div></div>'
     : c.district ? `<div class="hc-who"><div><b style="color:${c.district.color}">${esc(c.district.name.toUpperCase())}</b><span>Quartier de NEO-BXL</span></div></div>` : '';
