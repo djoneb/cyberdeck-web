@@ -428,3 +428,15 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 /* Fiches des lieux */
 .place { position: relative; } .pfile { position: absolute; top: 8px; right: 8px; color: var(--c); background: rgba(3, 9, 14, .7); padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
 .pfile:hover { background: color-mix(in srgb, var(--c) 25%, transparent); }
+/* Lieux : bandeau d'informations détaché ; quartiers cliquables et leur page */
+.pwrapc { display: flex; flex-direction: column; gap: 4px; } .pwrapc .place { width: 100%; }
+.pinfo { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 7px 10px; cursor: pointer; color: var(--c);
+  background: color-mix(in srgb, var(--c) 8%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.pinfo span { color: var(--dim); } .pinfo:hover { background: color-mix(in srgb, var(--c) 20%, transparent); }
+.repd { text-align: left; font: inherit; color: var(--tx); cursor: pointer; }
+.repd:hover { background: color-mix(in srgb, var(--c) 12%, transparent); }
+.dpage { max-height: 88vh; overflow-y: auto; }
+.dzone { display: flex; gap: 14px; align-items: flex-end; margin-top: 10px; } .dzone b { font-size: 44px; line-height: 1; }
+.dsteps { display: flex; gap: 14px; flex-wrap: wrap; margin: 2px 0 6px; }
+.dplace { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; } .dplace .place { width: 100%; min-height: 0; }
+.reps .repd { border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); padding: 10px; display: flex; flex-direction: column; background: none; gap: 2px; }

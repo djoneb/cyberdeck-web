@@ -207,23 +207,59 @@ export function city(view, ctx, tab = 'map') {
       upd(); tick = setInterval(upd, 1000); r.onclick = () => { tab = 'exp'; render(); };
     }
     body.querySelector('.reps').innerHTML = Wd.DISTRICTS.map(d => { const r = Wd.rep(d.id), tr = Wd.tier(r), next = [10, 25, 50, 50][tr];
-      return `<div style="--c:${d.color}"><span class="mono tiny" style="color:${d.color}">${esc(d.name.toUpperCase())}</span><b>${Wd.TIER_NAMES[tr]}</b><i><u style="width:${Math.min(100, r / next * 100)}%"></u></i></div>`; }).join('');
+      return `<button class="repd" data-d="${d.id}" style="--c:${d.color}"><span class="mono tiny" style="color:${d.color}">${esc(d.name.toUpperCase())}</span><b>${Wd.TIER_NAMES[tr]}</b><i><u style="width:${Math.min(100, r / next * 100)}%"></u></i><span class="mono tiny" style="color:${d.color}">ⓘ ${Math.min(100, r * 2)} %</span></button>`; }).join('');
+    body.querySelectorAll('.repd').forEach(b => b.onclick = () => districtPage(b.dataset.d));
     body.querySelector('#reptxt').textContent = Wd.bunkerUnlocked() ? '☢ Le Bunker Zéro t\'est ouvert : récompenses +50 %.' : `Réputation totale ${Wd.totalRep()}/40 : un lieu secret attend les légendes…`;
     body.querySelector('.places').innerHTML = Wd.PLACES.filter(p => p.id !== 'bunker' || bunker).map(pl => {
       const sp = Wd.spot(pl.id), open = !sp || Wd.isOpen(sp), left = Wd.cooldownLeft(pl.id);
-      return `<button class="place ${left > 0 || !open ? 'cool' : ''}" data-p="${pl.id}" style="--c:${pl.color}"><span class="pfile mono tiny" data-file="${pl.id}">▤ FICHE</span><span class="pic">${pl.icon}</span><b>${esc(pl.name)}</b><span class="dim tiny">${esc(pl.desc)}</span>
-        <em class="mono tiny" style="color:${!open ? C.red : left > 0 ? C.dim : pl.color}">${!open ? 'FERMÉ · ' + Wd.hoursLabel(sp) : left > 0 ? '↻ ' + Wd.fmtLeft(left) : 'ENTRER ›'}</em></button>`;
+      return `<div class="pwrapc"><button class="place ${left > 0 || !open ? 'cool' : ''}" data-p="${pl.id}" style="--c:${pl.color}"><span class="pic">${pl.icon}</span><b>${esc(pl.name)}</b><span class="dim tiny">${esc(pl.desc)}</span>
+        <em class="mono tiny" style="color:${!open ? C.red : left > 0 ? C.dim : pl.color}">${!open ? 'FERMÉ · ' + Wd.hoursLabel(sp) : left > 0 ? '↻ ' + Wd.fmtLeft(left) : 'ENTRER ›'}</em></button><button class="pinfo mono tiny" data-file="${pl.id}" style="--c:${pl.color}">ⓘ INFORMATIONS<span>${filePct(pl.id)} %</span></button></div>`;
     }).join('');
-    body.querySelectorAll('.place').forEach(b => b.onclick = (ev) => { const f = ev.target.closest('[data-file]'); if (f) placeFile(f.dataset.file); else go(b.dataset.p); });
+    body.querySelectorAll('.place').forEach(b => b.onclick = () => go(b.dataset.p));
+    body.querySelectorAll('.pinfo').forEach(b => b.onclick = () => placeFile(b.dataset.file));
   }
 
   // Fiche d'un lieu (wiki) : se complète avec tes passages et la réputation du quartier (mêmes règles que l'appli)
-  function placeFile(id) {
-    const pl = Wd.place(id), d = DOSSIERS.lieux?.[id]; if (!pl || !d) return;
+  function fileLines(id) {
+    const d = DOSSIERS.lieux?.[id]; if (!d) return [];
     const L = DOSSIERS.lieuxNiveaux, met = S.get('cyberdeck_b8', 'met_' + id, 0), sp = Wd.spot(id), rep = sp ? Wd.rep(sp.district) : 0;
     const at = (k, label, text) => ({ label, text: met >= L[k] ? text : null, how: `${L[k]} passage${L[k] > 1 ? 's' : ''} ici` });
-    const lines = [{ label: 'Quartier', text: d.quartier }, at('ambiance', 'Ambiance', d.ambiance), at('hist1', 'Les origines', d.hist[0]), at('hist2', 'Les habitués', d.hist[1]),
+    return [{ label: 'Quartier', text: d.quartier }, at('ambiance', 'Ambiance', d.ambiance), at('hist1', 'Les origines', d.hist[0]), at('hist2', 'Les habitués', d.hist[1]),
       at('hist3', 'Ce qu\'on raconte', d.hist[2]), { label: 'Secret du lieu', text: rep >= L.secretRep ? d.secret : null, how: `${L.secretRep} de réputation dans le quartier` }];
+  }
+  function filePct(id) { const l = fileLines(id); return l.length ? Math.floor(l.filter(x => x.text).length * 100 / l.length) : 0; }
+  // Page d'un quartier : réputation vers les 100 %, son histoire et tous ses lieux
+  function districtPage(did) {
+    const d = Wd.DISTRICTS.find(x => x.id === did), q = DOSSIERS.quartiers?.[did]; if (!d) return;
+    const rep = Wd.rep(did), pct = Math.min(100, rep * 2), tr = Wd.tier(rep), bunker = Wd.bunkerUnlocked();
+    const needs = [10, 25, 50], labels = ['Les origines', 'Ses règles', 'Ce qu\'il cache'];
+    const lines = q ? [{ label: 'Le quartier', text: q.desc }, ...needs.map((n, i) => ({ label: labels[i], text: rep >= n ? q.hist[i] : null, how: `${n} de réputation` }))] : [];
+    const places = Wd.PLACES.filter(p => Wd.spot(p.id)?.district === did);
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    ov.innerHTML = `<div class="encounter dpage" style="--c:${d.color}"><div class="mono small dim">QUARTIER DE NEO-BXL</div><h2 class="glitch" style="color:${d.color};margin:0">${esc(d.name.toUpperCase())}</h2>
+      <div class="dzone"><b style="color:${d.color}">${pct} %</b><div><div class="mono tiny dim">RÉPUTATION DE LA ZONE</div><div>${Wd.TIER_NAMES[tr]} · ${rep} / 50 points</div></div></div>
+      <div class="psybar"><i style="width:${pct}%;background:${d.color}"></i></div>
+      <div class="mono tiny dsteps">${[[10, 'Connu·e'], [25, 'Respecté·e'], [50, 'Légende']].map(([n, l]) => `<span style="color:${rep >= n ? d.color : C.dim}">${rep >= n ? '✓' : '○'} ${l} (${n})</span>`).join('')}</div>
+      <div class="dim small">Gagne de la réputation en visitant les lieux du quartier et en y bouclant des expéditions.</div>
+      <div class="mono small" style="color:${d.color};margin-top:12px">// INFORMATIONS</div>
+      ${lines.map(l => `<div class="dline ${l.text ? '' : 'lock'}"><div class="mono tiny" style="color:${l.text ? d.color : C.dim}">${esc(l.label.toUpperCase())}</div>
+        ${l.text ? `<div>${esc(l.text)}</div>` : `<div><span class="redact">█████ ███ ████</span> <span class="mono tiny dim">🔒 ${esc(l.how)}</span></div>`}</div>`).join('')}
+      <div class="mono small dim" style="margin-top:12px">LIEUX DU QUARTIER</div>
+      ${places.map(pl => { const secret = pl.id === 'bunker' && !bunker, sp = Wd.spot(pl.id), open = !sp || Wd.isOpen(sp);
+        return `<div class="dplace"><button class="place" data-go="${secret ? '' : pl.id}" style="--c:${pl.color}"><span class="pic">${secret ? '?' : pl.icon}</span><b>${secret ? 'Lieu secret' : esc(pl.name)}</b>
+          <span class="dim tiny">${secret ? 'Réservé aux légendes' : `${S.get('cyberdeck_b8', 'met_' + pl.id, 0)} passage(s) · ${sp ? Wd.hoursLabel(sp) : ''}`}</span>
+          ${secret ? '' : `<em class="mono tiny" style="color:${open ? pl.color : C.red}">${open ? 'ENTRER ›' : 'FERMÉ'}</em>`}</button>
+          ${secret ? '' : `<button class="pinfo mono tiny" data-file="${pl.id}" style="--c:${pl.color}">ⓘ INFORMATIONS<span>fiche ${filePct(pl.id)} %</span></button>`}</div>`; }).join('')}
+      <button class="btn" id="dclose">Fermer</button></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector('#dclose').onclick = close; ov.onclick = (e) => { if (e.target === ov) close(); };
+    ov.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if (!b.dataset.go) { ctx.toast('Lieu secret : il faut 40 de réputation au total'); return; } close(); go(b.dataset.go); });
+    ov.querySelectorAll('.pinfo').forEach(b => b.onclick = () => placeFile(b.dataset.file));
+  }
+  function placeFile(id) {
+    const pl = Wd.place(id), d = DOSSIERS.lieux?.[id]; if (!pl || !d) return;
+    const met = S.get('cyberdeck_b8', 'met_' + id, 0), lines = fileLines(id);
     const pct = Math.floor(lines.filter(l => l.text).length * 100 / lines.length);
     const ov = document.createElement('div'); ov.className = 'overlay';
     ov.innerHTML = `<div class="encounter" style="--c:${pl.color}"><div class="mono small" style="color:${pl.color}">${pl.icon}  ${esc(pl.name.toUpperCase())}</div>
