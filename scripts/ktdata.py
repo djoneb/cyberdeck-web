@@ -70,6 +70,9 @@ def enc(e):
 strangers=[enc(e) for e in grab('Batch8.kt','STRANGERS = ')]
 districts=[obj(d,['id','name','color']) for d in grab('Batch9.kt','val DISTRICTS = ')]
 spots=[obj(d,['placeId','x','y','district','open','close']) for d in grab('Batch9.kt','val SPOTS = ')]
+zones=[obj(d,['id','name','color']) for d in grab('Batch9.kt','val ZONES = ')]
+zspots=[obj(d,['placeId','x','y','district','open','close']) for d in grab('Batch9.kt','val ZONE_SPOTS = ')]
+zplaces=[obj(p,['id','name','desc','icon','color','regulars','mood']) for p in grab('Batch8.kt','val ZONE_PLACES = ')]
 events=[obj(d,['text','safe','risky']) for d in grab('Batch9.kt','val POOL = ')]
 chains={k:[obj(e,['title','place','minutes','brief','report']) for e in v] for k,v in grab('Batch9.kt','val CHAINS: Map<String, List<ChainEp>> = ').items()}
 need=grab('Batch9.kt','val NEED = ')
@@ -90,7 +93,7 @@ secrets_list=[obj(a,['id','title','hint','reveal']) for a in grab('Batch7.kt','o
 challenges=[obj(a,['id','text','goal']) for a in grab('Batch7.kt','object WeeklyChallenges {\n    val POOL = ')]
 cityevents=[obj(a,['id','name','desc','task','event','xp','color']) for a in grab('Batch6.kt','object CityEvents {\n    val ALL = ')]
 chapters=[obj(a,['id','title','goal','text']) for a in grab('Batch5.kt','val CHAPTERS = ')]
-out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need,'CHROMES':chromes,'SMS_LINES':sms,'SECRETS':secrets,'CONVOS':convos,'DATE_PLACES':dplaces,'BOND_TITLES':titles,'DATE_LINES':dlines,'GIFTS_R':gifts,'ITEMS':items,'ACHIEVEMENTS':achievements,'SECRETS_LIST':secrets_list,'CHALLENGES':challenges,'CHAPTERS':chapters,'CITY_EVENTS':cityevents}
+out={'CONTACTS':contacts,'GIGS':gigs,'EXPEDITIONS':exps,'RUNNER_NAMES':runners,'PLACES':places,'STRANGERS':strangers,'DISTRICTS':districts,'SPOTS':spots,'ZONES':zones,'ZONE_SPOTS':zspots,'ZONE_PLACES':zplaces,'EXP_EVENTS':events,'CHAINS':chains,'CHAIN_NEED':need,'CHROMES':chromes,'SMS_LINES':sms,'SECRETS':secrets,'CONVOS':convos,'DATE_PLACES':dplaces,'BOND_TITLES':titles,'DATE_LINES':dlines,'GIFTS_R':gifts,'ITEMS':items,'ACHIEVEMENTS':achievements,'SECRETS_LIST':secrets_list,'CHALLENGES':challenges,'CHAPTERS':chapters,'CITY_EVENTS':cityevents}
 with open(sys.argv[1],'w') as f:
     f.write('// Généré depuis le code du launcher (scripts/ktdata.py) : ne pas modifier à la main.\n')
     for k,v in out.items(): f.write(f'export const {k} = {json.dumps(v,ensure_ascii=False)};\n')

@@ -3,9 +3,9 @@ import * as S from './save.js';
 import { R, KRandom, hashCode, today, epochDay } from './krand.js';
 import { chromeActive, itemActive } from './social.js';
 import * as Q from './quests.js';
-import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED, STORIES } from './gamedata.js';
+import { CONTACTS, GIGS, EXPEDITIONS, RUNNER_NAMES, PLACES, STRANGERS, DISTRICTS, SPOTS, EXP_EVENTS, CHAINS, CHAIN_NEED, STORIES, ZONES, ZONE_PLACES, ZONE_SPOTS } from './gamedata.js';
 
-export { CONTACTS, PLACES, DISTRICTS, SPOTS, CHAINS, CHAIN_NEED };
+export { CONTACTS, PLACES, DISTRICTS, SPOTS, CHAINS, CHAIN_NEED, ZONES, ZONE_PLACES };
 const HP = 'cyberdeck_holophone', B8 = 'cyberdeck_b8', B9 = 'cyberdeck_b9';
 const pick = (a, r) => a[r.nextIntUntil(a.length)];
 
@@ -64,9 +64,31 @@ export function finishGame(id, score, xp) {
 }
 
 // ── Ville
-export const place = (id) => PLACES.find(p => p.id === id);
-export const spot = (id) => SPOTS.find(s => s.placeId === id);
-export const district = (id) => DISTRICTS.find(d => d.id === id);
+export const place = (id) => PLACES.find(p => p.id === id) || ZONE_PLACES.find(p => p.id === id);
+export const spot = (id) => SPOTS.find(s => s.placeId === id) || ZONE_SPOTS.find(s => s.placeId === id);
+export const district = (id) => DISTRICTS.find(d => d.id === id) || ZONES.find(d => d.id === id);
+export const isZone = (id) => ZONES.some(z => z.id === id);
+/** Bonus de récompense des lieux de chaque zone (comme le téléphone). */
+export const ZONE_BONUS = { rouillebourg: 20, badlands: 25, necropole: 30, tour: 50, aurore: 60 };
+/** Condition de déblocage d'une zone : null si débloquée, sinon ce qu'il manque. */
+export function zoneLock(id) {
+  const base = DISTRICTS.map(d => S.get(B9, 'rep_' + d.id, 0));
+  if (id === 'rouillebourg') return base.every(r => r >= 25) ? null : 'Sois Respecté·e (25) dans les 4 quartiers de NEO-BXL';
+  if (id === 'badlands') return affinity('rook') >= 60 ? null : 'Atteins 60 d\'affinité avec Rook : son convoi t\'y emmènera';
+  if (id === 'necropole') return affinity('vex') >= 40 && affinity('ivana') >= 40 ? null : 'Atteins 40 d\'affinité avec Vex et avec Ivana';
+  if (id === 'tour') return base.every(r => r >= 50) ? null : 'Deviens une Légende (50) dans les 4 quartiers de NEO-BXL';
+  if (id === 'aurore') return [...DISTRICTS, ...ZONES.filter(z => z.id !== 'aurore')].every(d => S.get(B9, 'rep_' + d.id, 0) >= 25) ? null : 'Sois Respecté·e (25) partout : les 4 quartiers et les 4 autres zones';
+  return null;
+}
+export function zoneUnlockPercent(id) {
+  const reps = (ids, need) => Math.floor(ids.reduce((a, i) => a + Math.min(S.get(B9, 'rep_' + i, 0), need), 0) * 100 / (ids.length * need));
+  if (id === 'rouillebourg') return reps(DISTRICTS.map(d => d.id), 25);
+  if (id === 'badlands') return Math.min(100, Math.floor(affinity('rook') * 100 / 60));
+  if (id === 'necropole') return Math.floor((Math.min(40, affinity('vex')) + Math.min(40, affinity('ivana'))) * 100 / 80);
+  if (id === 'tour') return reps(DISTRICTS.map(d => d.id), 50);
+  if (id === 'aurore') return reps([...DISTRICTS, ...ZONES.filter(z => z.id !== 'aurore')].map(d => d.id), 25);
+  return 100;
+}
 const hour = () => new Date().getHours();
 export function isOpen(s, h = hour()) {
   if (s.open === 0 && s.close === 24) return true;
@@ -124,6 +146,7 @@ export function visit(id) {
   const pl = place(id), sp = spot(id);
   if (!pl) return { error: 'Lieu inconnu' };
   if (id === 'bunker' && !bunkerUnlocked()) return { error: 'Accès refusé. Il faut plus de réputation dans les quartiers.' };
+  if (sp && isZone(sp.district)) { const lk = zoneLock(sp.district); if (lk) return { error: 'Zone verrouillée : ' + lk }; }
   if (sp && !isOpen(sp)) return { error: 'Fermé. Ouvert ' + hoursLabel(sp) };
   const left = cooldownLeft(id);
   if (left > 0) return { error: `Rien de neuf ici. Reviens dans ${Math.floor(left / 60000) + 1} min` };
@@ -170,6 +193,7 @@ export function choose(placeId, e, idx) {
   else if (phase() === 2) mult = Math.floor(mult * 110 / 100);
   mult = Math.floor(mult * (100 + WEATHER_BONUS[weather()]) / 100);
   if (placeId === 'bunker') mult = Math.floor(mult * 150 / 100);
+  if (sp && ZONE_BONUS[sp.district]) mult = Math.floor(mult * (100 + ZONE_BONUS[sp.district]) / 100);
   if (sp) { mult = Math.floor(mult * (100 + 10 * tier(rep(sp.district))) / 100); addRep(sp.district, ch.xp >= 20 ? 2 : 1); }
   const cash = ch.eddies > 0 ? Math.floor(ch.eddies * mult / 100) : ch.eddies;
   if (cash) S.addEddies(cash);

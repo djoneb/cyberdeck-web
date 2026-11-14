@@ -444,3 +444,11 @@ canvas.infil { width: auto; height: min(76vh, 900px); max-width: 100%; }
 .expev.story { border-color: color-mix(in srgb, var(--amber) 60%, transparent); }
 .sbdone { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
 .shead { display: flex; gap: 12px; align-items: center; margin: 8px 0; } .shead b { font-size: 19px; }
+/* Zones à débloquer */
+.zones { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.zcard { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px; cursor: pointer; color: var(--c); font: inherit;
+  background: color-mix(in srgb, var(--c) 12%, transparent); border: 1px solid color-mix(in srgb, var(--c) 70%, transparent); }
+.zcard b { font-family: "Share Tech Mono", monospace; letter-spacing: .08em; font-size: 14px; }
+.zcard i { display: block; height: 3px; background: rgba(255, 255, 255, .08); } .zcard i u { display: block; height: 100%; background: var(--c); }
+.zcard.locked { color: var(--dim); background: rgba(255, 255, 255, .03); border-color: color-mix(in srgb, var(--c) 25%, transparent); } .zcard.locked i u { background: var(--dim); }
+.zlock { margin: 10px 0; padding: 10px 12px; border: 1px solid rgba(127, 154, 162, .5); background: rgba(255, 255, 255, .03); display: flex; flex-direction: column; gap: 4px; }
