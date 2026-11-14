@@ -155,6 +155,16 @@ export const lastVisit = (id) => S.get(B8, 'city_last_' + id, 0);
 export const cooldownLeft = (id) => Math.max(0, lastVisit(id) + cooldown() - Date.now());
 export const visits = () => S.get(B8, 'visits', 0);
 const pending = {};
+// Un contact n'est qu'à un seul endroit à la fois : il change de lieu toutes les 3 h parmi ceux qu'il fréquente
+// (et accessibles), et il n'est nulle part quand il est parti en mission avec toi. Même règle que l'appli.
+const SLOT_MS = 3 * 3600000;
+export function whereIs(cid, now = Date.now()) {
+  if (active().some(a => a.exp.contactId === cid)) return null;
+  const cands = [...PLACES, ...ZONE_PLACES].filter(p => p.regulars.includes(cid) && (p.id !== 'bunker' || bunkerUnlocked())
+    && (() => { const sp = spot(p.id); return !sp || !isZone(sp.district) || zoneState(sp.district) === 2; })()).map(p => p.id).sort();
+  if (!cands.length) return null;
+  return cands[(hashCode(cid + ':' + Math.floor(now / SLOT_MS)) & 0x7fffffff) % cands.length];
+}
 /** Arrivée dans un lieu : renvoie { encounter } ou { error }. */
 export function visit(id) {
   const pl = place(id), sp = spot(id);
@@ -169,6 +179,8 @@ export function visit(id) {
   const now = Date.now(), r = R(now), roll = r.nextIntUntil(100), mood = pick(pl.mood, r);
   let e;
   const runnerJobs = EXPEDITIONS.filter(x => x.contactId === 'runner' && !takenToday(x.id));
+  // seuls les habitués qui sont ICI en ce moment peuvent apparaître (un contact n'est jamais à deux endroits)
+  const here = pl.regulars.filter(cid => whereIs(cid, now) === id);
   if (roll < 22 && runnerJobs.length) {
     const job = pick(runnerJobs, r), name = RUNNER_NAMES[R(now).nextIntUntil(RUNNER_NAMES.length)];
     e = { kind: 'runner', who: name, contactId: null, expedition: job,
@@ -176,8 +188,8 @@ export function visit(id) {
       choices: [{ label: `Accepter le contrat (${job.minutes} min)`, result: '« Parfait. Je t\'envoie les coordonnées. On se revoit quand c\'est fait. »', xp: 10, eddies: 0, aff: 0 },
         { label: 'Négocier', result: '« T\'es dur·e en affaires. D\'accord, je rajoute un petit bonus. »', xp: 10, eddies: 15, aff: 0 },
         { label: 'Refuser', result: '« Dommage. Il y en aura d\'autres. »', xp: 5, eddies: 0, aff: 0 }] };
-  } else if (roll < 65) {
-    const c = contact(pick(pl.regulars, r));
+  } else if (roll < 65 && here.length) {
+    const c = contact(pick(here, r));
     e = { kind: 'contact', who: c.name, contactId: c.id, text: `${mood}\n\n${c.name} est là. « ${pick(c.hello, r)} »`,
       choices: [{ label: 'Offrir un verre (−10 €$)', result: pick(c.thanks, r), xp: 15, eddies: -10, aff: 5 },
         { label: 'Parler boulot', result: pick(c.offer, r), xp: 20, eddies: 0, aff: 2 },
