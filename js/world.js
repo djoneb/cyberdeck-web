@@ -80,6 +80,20 @@ export function zoneLock(id) {
   if (id === 'aurore') return [...DISTRICTS, ...ZONES.filter(z => z.id !== 'aurore')].every(d => S.get(B9, 'rep_' + d.id, 0) >= 25) ? null : 'Sois Respecté·e (25) partout : les 4 quartiers et les 4 autres zones';
   return null;
 }
+/** Message de NEURA quand une zone se révèle (mêmes textes que le téléphone). */
+export const ZONE_REVEAL = {
+  rouillebourg: 'Nouvelles infos : ta réputation t\'ouvre Rouillebourg, la zone industrielle. Les usines dorment le jour… et dansent la nuit.',
+  badlands: 'Rook vient de m\'envoyer des coordonnées : son convoi peut t\'emmener dans les Badlands. Prépare-toi au sable.',
+  necropole: 'Vex et Ivana m\'ont transmis un accès : la Nécropole Nord. Elle n\'ouvre ses portes que la nuit.',
+  tour: 'Ta réputation de légende a fait le tour de la ville. J\'ai trouvé un accès à la Tour Kurogane. Sois prudent·e.',
+  aurore: 'Une invitation vient d\'arriver… Nova Prime, la ville suspendue. On ne monte là-haut que lorsqu\'on est respecté partout.',
+};
+/** Zones débloquées mais pas encore annoncées : on les marque comme vues. */
+export function freshZones() {
+  const fresh = ZONES.filter(z => !zoneLock(z.id) && !S.get(B9, 'zseen_' + z.id, false));
+  fresh.forEach(z => S.setB(B9, 'zseen_' + z.id, true)); if (fresh.length) S.persist();
+  return fresh;
+}
 export function zoneUnlockPercent(id) {
   const reps = (ids, need) => Math.floor(ids.reduce((a, i) => a + Math.min(S.get(B9, 'rep_' + i, 0), need), 0) * 100 / (ids.length * need));
   if (id === 'rouillebourg') return reps(DISTRICTS.map(d => d.id), 25);

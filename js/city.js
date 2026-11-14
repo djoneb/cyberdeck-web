@@ -53,7 +53,7 @@ export function city(view, ctx, tab = 'map') {
         return `<span class="mono tiny maptag skytag" style="left:8px"><span style="color:${['#ffb07a', C.amber, '#ff7a5a', '#b98cff'][ph]}">${['◒', '☀', '◓', '☾'][ph]} ${Wd.PHASES[ph]}${pb ? ' · +' + pb + ' %' : ''}</span>
           <span style="color:${[C.amber, '#7cf2c8', '#bfd8ff', '#f2c27b', '#5cffb0'][we]}">${Wd.WEATHER_ICONS[we]} ${Wd.WEATHERS[we]}${wb ? ' · +' + wb + ' %' : ''} · jusqu'à ${String(Wd.weatherEnd()).padStart(2, '0')} h</span>${we ? `<span style="color:${C.dim}">${Wd.WEATHER_FX[we]}</span>` : ''}</span>`; })()}
       <span class="mono tiny maptag" style="right:8px;color:${C.amber}">● contact sur place</span></div>
-      <div id="expreminder"></div><div class="reps"></div><p class="dim small" id="reptxt"></p><div class="mono dim small" style="margin:14px 0 6px">ZONES DE NEO-BXL</div><div class="zones"></div>
+      <div id="expreminder"></div><div class="reps"></div><p class="dim small" id="reptxt"></p><div class="mono dim small" style="margin:14px 0 6px">ZONES DE NEO-BXL</div><div class="mono dim small zhint"></div><div class="zones"></div>
       <div class="mono dim small" style="margin:16px 0 6px">LIEUX · ${Wd.visits()} VISITE(S)</div><div class="places"></div>`;
     const wrap = body.querySelector('.map'), cv = wrap.querySelector('canvas'), g = cv.getContext('2d'), labels = wrap.querySelector('.maplabels');
     const bunker = Wd.bunkerUnlocked(), spots = Wd.SPOTS.filter(s => s.placeId !== 'bunker' || bunker);
@@ -209,7 +209,9 @@ export function city(view, ctx, tab = 'map') {
     body.querySelector('.reps').innerHTML = Wd.DISTRICTS.map(d => { const r = Wd.rep(d.id), tr = Wd.tier(r), next = [10, 25, 50, 50][tr];
       return `<button class="repd" data-d="${d.id}" style="--c:${d.color}"><span class="mono tiny" style="color:${d.color}">${esc(d.name.toUpperCase())}</span><b>${Wd.TIER_NAMES[tr]}</b><i><u style="width:${Math.min(100, r / next * 100)}%"></u></i><span class="mono tiny" style="color:${d.color}">ⓘ ${Math.min(100, r * 2)} %</span></button>`; }).join('');
     body.querySelectorAll('.repd').forEach(b => b.onclick = () => districtPage(b.dataset.d));
-    body.querySelector('.zones').innerHTML = Wd.ZONES.map(z => { const lk = Wd.zoneLock(z.id), pct = lk ? Wd.zoneUnlockPercent(z.id) : Math.min(100, Wd.rep(z.id) * 2);
+    const openZ = Wd.ZONES.filter(z => !Wd.zoneLock(z.id)), hiddenZ = Wd.ZONES.length - openZ.length;
+    body.querySelector('.zhint').textContent = !hiddenZ ? '' : openZ.length ? `▒▒▒ ${hiddenZ} zone(s) encore inconnue(s)…` : '▒▒▒ Des zones inconnues existent au-delà des quartiers. Ta réputation les révélera…';
+    body.querySelector('.zones').innerHTML = openZ.map(z => { const lk = Wd.zoneLock(z.id), pct = lk ? Wd.zoneUnlockPercent(z.id) : Math.min(100, Wd.rep(z.id) * 2);
       return `<button class="zcard ${lk ? 'locked' : ''}" data-z="${z.id}" style="--c:${z.color}"><b>${lk ? '🔒' : '◆'} ${esc(z.name.toUpperCase())}</b>
         <span class="mono tiny dim">${lk ? 'Accès' : 'Réputation'} ${pct} %</span><i><u style="width:${pct}%"></u></i></button>`; }).join('');
     body.querySelectorAll('.zcard').forEach(b => b.onclick = () => districtPage(b.dataset.z));
