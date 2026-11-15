@@ -46,6 +46,10 @@ jobs:
             echo "relais pas encore joignable ($i)"; sleep 20
           done
 
+      # Fichiers de travail (Claude Code, graphe du code) : jamais publiés sur le site
+      - name: Exclude dev files
+        run: rm -rf .claude CLAUDE.md graphify-out
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
