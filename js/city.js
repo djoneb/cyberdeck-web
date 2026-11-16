@@ -66,7 +66,7 @@ export function city(view, ctx, tab = 'map') {
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
-      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; // paysage : la tour des Toits tient en entier SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
+      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; SW = A / 0.46; /* paysage : la tour des Toits tient en entier */ OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
