@@ -5,7 +5,7 @@ import { GAMES, gameNote, openGame } from './games.js';
 import { holophone as holoPage, checkDossiers } from './holophone.js';
 import * as Log from './neuralog.js';
 import { city } from './city.js';
-import { phoneGlyph } from './portrait.js';
+import { phoneGlyph, portraitCanvas } from './portrait.js';
 import * as Wd from './world.js';
 import * as So from './social.js';
 import { cyberware, market, PALETTES, WEB_THEME_KEY } from './market.js';
@@ -14,6 +14,7 @@ import * as Q from './quests.js';
 import { cartes, checkCards, cardCount, cardTotal } from './cardsui.js';
 import { openShare } from './sharecard.js';
 import * as Sync from './sync.js';
+import { CONTACTS } from './gamedata.js';
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');
@@ -240,7 +241,23 @@ S.load();
 applyTheme();
 S.setXpHook((n) => { const c = Q.challenge('xp', n); if (c) toast(`Défi de la semaine réussi : « ${c.text} »`); });
 // Fin de rendez-vous : vérifiée régulièrement, même si on est sur une autre page.
-setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) { popup(r.title, r.text); ctx.changed(); } }, 15000);
+// Résumé de fin de rendez-vous : récit, ambiance, réplique du contact et gains
+function datePopup(d) {
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="encounter" style="--c:var(--amber);align-items:center;text-align:center"><div class="mono small" style="color:var(--amber);letter-spacing:.15em">♥ RENDEZ-VOUS TERMINÉ</div>
+    <div class="mono tiny dim">${esc(d.place)}</div><div class="dport"></div><b style="font-size:20px">${esc(d.name)}</b>
+    <div class="mono small" style="color:${d.mood === 2 ? 'var(--amber)' : '#ff7ab6'}">${'♥'.repeat(d.mood + 1)}${'♡'.repeat(2 - d.mood)} ${So.DATE_MOODS[d.mood]}</div>
+    <div style="text-align:left;width:100%">${d.story.map(l => `<p style="font-size:15px;margin:0 0 6px">› ${esc(l)}</p>`).join('')}</div>
+    <p style="color:#ffc8e0;border:1px solid rgba(246,179,92,.35);padding:10px;width:100%;box-sizing:border-box">« ${esc(d.quote)} »</p>
+    <div class="mono small" style="color:var(--green)">+${d.xp} XP · ♥ lien +${d.bond} · affinité +3</div>
+    ${d.after > d.before ? `<div class="mono small" style="color:var(--amber)"><b>♥ Lien niveau ${d.after} : ${esc(d.title)}</b></div>` : ''}
+    <div style="display:flex;gap:8px;width:100%"><button class="btn" style="flex:1" data-w>Écrire à ${esc(d.name.split(" ")[0])}</button><button class="btn main" style="flex:1" data-c>Fermer</button></div></div>`;
+  const c = CONTACTS.find(x => x.id === d.id); if (c) ov.querySelector('.dport').appendChild(portraitCanvas(c, 84, d.mood === 2));
+  ov.querySelector('[data-c]').onclick = () => ov.remove();
+  ov.querySelector('[data-w]').onclick = () => { ov.remove(); go('holophone', d.id); };
+  document.body.appendChild(ov);
+}
+setInterval(() => { if (!S.hasSave()) return; const r = So.checkDate(); if (r) { if (r.summary) datePopup(r.summary); else popup(r.title, r.text); ctx.changed(); } }, 15000);
 // Cyberpsychose : la charge neurale avance aussi pendant qu'on joue sur le site
 setInterval(() => { if (!S.hasSave()) return; const c = So.psyTick(); if (c) { popup('CYBERPSYCHOSE', c); ctx.changed(); } }, 30000);
 // Zone qui se débloque : NEURA l'annonce, et elle apparaît dans la ville

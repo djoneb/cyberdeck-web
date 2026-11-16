@@ -97,8 +97,23 @@ export function checkDate() {
   addBond(id, place?.bond ?? 15); addAff(id, 3); Q.challenge('date'); S.addXp(place?.xp ?? 30); S.persist();
   const after = bondLevel(bond(id)), c = CONTACTS.find(x => x.id === id);
   const lines = DATE_LINES[id]; const line = lines ? lines[Math.floor(Math.random() * lines.length)] : 'C\'était un très beau moment. Merci.';
-  return { title: 'RENDEZ-VOUS TERMINÉ', text: `${c.name} : « ${line} »` + (after > before ? `  ♥ Lien niv ${after}` : '') };
+  const r = Math.floor(Math.random() * 100), top = 25 + after * 5, mood = r < top ? 2 : r < top + 45 ? 1 : 0;
+  return { title: 'RENDEZ-VOUS TERMINÉ', text: `${c.name} : « ${line} »` + (after > before ? `  ♥ Lien niv ${after}` : ''),
+    summary: { id, name: c.name, place: place?.name ?? 'Rendez-vous', story: dateStory(place?.id, c.name.split(' ')[0]), mood, quote: line, xp: place?.xp ?? 30, bond: place?.bond ?? 15, before, after, title: bondTitle(bond(id)) } };
 }
+// Récit de fin de rendez-vous (identique à l'appli) : arrivée, un moment fort, la fin de soirée. Texte seulement.
+const DATE_OPEN = { canal: "Vous longez le canal ; les néons tremblent sur l'eau noire.", market: 'Le marché de nuit du Bazar Néon déborde de vapeur et de lanternes holographiques.',
+  roof: "Sur le toit de Zone Zéro, la ville s'étale à vos pieds au crépuscule.", club: 'Au club Ondes, les basses font vibrer le sol et les lasers découpent la fumée.' };
+const DATE_MOMENTS = {
+  canal: ['Une péniche-bar passe tout près ; {n} te tend la moitié de son verre.', "Un drone de police vous éblouit ; {n} éclate de rire et t'attrape la main pour filer.", "Vous vous asseyez sur le quai, les jambes au-dessus de l'eau, sans rien dire pendant un long moment."],
+  market: ["{n} commande des nouilles bien trop épicées et refuse d'avouer que ça pique.", 'Un vendeur de puces vous offre un hologramme souvenir : vous deux, en pixels.', 'Vous vous perdez entre les étals et {n} négocie un bracelet lumineux pour toi.'],
+  roof: ['Le soleil disparaît derrière la Tour Kurogane ; {n} pose la tête sur ton épaule.', 'Un essaim de drones de livraison passe juste au-dessus de vous, comme des lucioles.', "{n} te montre son coin secret : une vieille antenne d'où l'on voit tout NEO-BXL."],
+  club: ["{n} t'entraîne au milieu de la piste et ne te lâche plus.", 'Le DJ passe un vieux morceau de 2050 ; vous êtes les seuls à connaître les paroles.', 'Vous sortez reprendre votre souffle dans la ruelle, sous la pluie tiède, en riant.'] };
+const DATE_ENDS = ['Vous vous quittez au coin de la rue, sans vraiment vouloir partir.', "{n} te raccompagne jusqu'à la station, en traînant le pas.", 'En partant, {n} te glisse : « À très vite. »', 'Le dernier métro est parti ; vous rentrez à pied, en prenant le chemin le plus long.'];
+export const DATE_MOODS = ['Moment doux', 'Très belle soirée', 'Soirée parfaite'];
+const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
+function dateStory(pid, name) { const f = (t) => t.replace('{n}', name);
+  return [DATE_OPEN[pid] || 'Vous passez la soirée ensemble, loin du bruit de la ville.', f(DATE_MOMENTS[pid] ? pickOne(DATE_MOMENTS[pid]) : '{n} te raconte des souvenirs que personne d\'autre ne connaît.'), f(pickOne(DATE_ENDS))]; }
 export function giftToday(id) {
   const r = R(epochDay() * 733 + hashCode(id)), chance = 18 + bondLevel(bond(id)) * 4;
   return r.nextIntUntil(100) < chance ? GIFTS_R[r.nextIntUntil(GIFTS_R.length)] : null;
