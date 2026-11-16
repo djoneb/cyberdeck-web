@@ -322,7 +322,7 @@ export function claimExpedition(a) {
   let cash = Math.floor(Math.floor(expEddies(a.exp) * mult / 100) / (win ? 1 : 2)); if (chromeActive('loot')) cash = Math.floor(cash * 3 / 2);
   if (weatherAt(a.start) === 3) { cash = Math.floor(cash * 7 / 5); Q.challenge('sand_exp'); }
   logBump('e'); S.addEddies(cash);
-  addRep(DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length].id, 2);
+  const repD = DISTRICTS[(hashCode(a.exp.place) & 0x7fffffff) % DISTRICTS.length]; addRep(repD.id, 2);
   let chainEnd = false;
   const p = win ? parseChain(a.exp.id) : null;
   if (p) {
@@ -339,7 +339,21 @@ export function claimExpedition(a) {
   if (pc) { const ep = storyEp(pc[0], pc[1]);
     return { story: true, win, last: chainEnd, contactId: pc[0], text: (win ? ep?.win : ep?.lose) || a.exp.report,
       rewards: `+${xp} XP · +${cash} €$` + (chainEnd ? ' · histoire terminée : +150 XP · +200 €$' : '') }; }
-  return { title: chainEnd ? 'HISTOIRE TERMINÉE · +150 XP · +200 €$' : `EXPÉDITION RÉUSSIE · +${xp} XP` + (mult !== 100 ? ` (${mult > 100 ? '+' : ''}${mult - 100} %)` : ''), text: `${who} : « ${a.exp.report} »` };
+  return { title: chainEnd ? 'HISTOIRE TERMINÉE · +150 XP · +200 €$' : `EXPÉDITION RÉUSSIE · +${xp} XP` + (mult !== 100 ? ` (${mult > 100 ? '+' : ''}${mult - 100} %)` : ''), text: `${who} : « ${a.exp.report} »`,
+    summary: expRecap(a, who, mult, xp, cash, a.exp.contactId !== 'runner' ? expAff(a.exp) : 0, repD.name) };
+}
+// Récapitulatif de fin d'expédition (identique à l'appli) : départ, imprévu et choix, météo, rapport du contact
+export const EXP_VERDICTS = ['De justesse', 'Mission accomplie', 'Mission propre', 'Coup de maître'];
+const EXP_WEATHER = ['', 'La pluie acide te colle à la peau tout le long du trajet.', "L'orage fait sauter les relais : tu avances à l'aveugle entre deux éclairs.",
+  'La tempête de sable rallonge la route, mais la paie est meilleure.', "La tempête magnétique fait grésiller ton deck pendant toute l'opération."];
+function expRecap(a, who, mult, xp, cash, aff, district) {
+  const lines = [`Départ pour ${a.exp.place} : ${a.exp.brief.replace(/\.+$/, '')}.`];
+  if (mult !== 100) { const ev = expEvent(a);
+    lines.push(`${ev.text} ` + (mult === 110 ? `Tu choisis de « ${ev.safe.toLowerCase()} » : la prudence paie.` : mult === 160 ? `Tu choisis de « ${ev.risky.toLowerCase()} » : ça passe, et la prise est plus grosse.` : `Tu choisis de « ${ev.risky.toLowerCase()} » : ça tourne mal, tu t'en sors de justesse.`)); }
+  const w = weatherAt(a.start); if (w >= 1 && w <= 4) lines.push(EXP_WEATHER[w]);
+  const minutes = Math.round((a.end - a.start) / 60000); lines.push(`Mission bouclée en ${minutes} min.`);
+  return { contactId: a.exp.contactId, who, title: a.exp.title, place: a.exp.place, minutes, story: lines, quote: a.exp.report,
+    verdict: mult === 160 ? 3 : mult === 110 ? 2 : mult === 70 ? 0 : 1, xp, cash, aff, district };
 }
 export function fmtLeft(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));

@@ -30,6 +30,24 @@ function towers() {
   return (TOWERS = out);
 }
 
+// Récapitulatif de fin d'expédition : portrait du contact, récit, verdict, rapport et gains
+function expSummary(d) {
+  const col = ['#e8505b', '#6ff3f0', '#7cf29a', '#f6b35c'][d.verdict], c = Wd.CONTACTS.find(x => x.id === d.contactId);
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  const shut = () => ov.parentNode && ov.parentNode.removeChild(ov);
+  ov.innerHTML = `<div class="encounter" style="--c:var(--cy);align-items:center;text-align:center"><div class="mono small" style="color:var(--cy);letter-spacing:.15em">⌖ EXPÉDITION TERMINÉE</div>
+    <b style="font-size:18px">${esc(d.title)}</b><div class="mono tiny dim">${esc(d.place)} · ${d.minutes} min</div><div class="eport">${c ? '' : '<div style="width:80px;height:80px;border:1px solid rgba(111,243,240,.6);display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--cy)">⌖</div>'}</div>
+    <b style="font-size:17px">${esc(d.who)}</b><div class="mono small" style="color:${col}">◆ ${Wd.EXP_VERDICTS[d.verdict]}</div>
+    <div style="text-align:left;width:100%">${d.story.map(l => `<p style="font-size:15px;margin:0 0 6px">› ${esc(l)}</p>`).join('')}</div>
+    <p style="color:#bff6ff;border:1px solid rgba(111,243,240,.35);padding:10px;width:100%;box-sizing:border-box">« ${esc(d.quote)} »</p>
+    <div class="mono small" style="color:var(--green)">+${d.xp} XP · +${d.cash} €$${d.aff > 0 ? ' · affinité +' + d.aff : ''} · réputation ${esc(d.district)} +2</div>
+    <div style="display:flex;gap:8px;width:100%">${c ? `<button class="btn" style="flex:1" data-w>Appeler ${esc(c.name.split(' ')[0])}</button>` : ''}<button class="btn main" style="flex:1" data-c>Fermer</button></div></div>`;
+  if (c) ov.querySelector('.eport').appendChild(portraitCanvas(c, 80, d.verdict === 3));
+  ov.querySelector('[data-c]').onclick = shut;
+  const w = ov.querySelector('[data-w]'); if (w) w.onclick = () => { shut(); location.hash = 'holophone'; };
+  document.body.appendChild(ov);
+}
+
 export function city(view, ctx, tab = 'map') {
   let raf = null, tick = null;
   const stop = () => { cancelAnimationFrame(raf); clearInterval(tick); };
@@ -521,7 +539,7 @@ export function city(view, ctx, tab = 'map') {
       body.querySelectorAll('[data-chain]').forEach(b => b.onclick = () => storyIntro(b.dataset.chain));
       body.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => { const a = Wd.active().find(x => x.exp.id === b.dataset.claim); const r = a && Wd.claimExpedition(a);
         if (!r) return; if (r.error) { ctx.toast(r.error); return; }
-        if (r.story) storyEnd(r); else ctx.popup(r.title, r.text); ctx.changed(); render(); });
+        if (r.story) storyEnd(r); else if (r.summary) expSummary(r.summary); else ctx.popup(r.title, r.text); ctx.changed(); render(); });
       body.querySelectorAll('[data-sb]').forEach(b => b.onclick = () => { const a = Wd.active()[0]; const [bt, i] = b.dataset.sb.split(':').map(Number); Wd.storyChoose(a, bt, i); paint(); });
       body.querySelectorAll('[data-ev]').forEach(b => b.onclick = () => { const a = Wd.active()[0]; ctx.toast(Wd.resolveExpEvent(a, b.dataset.ev === '1')); paint(); });
     };
