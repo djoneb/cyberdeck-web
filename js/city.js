@@ -198,7 +198,7 @@ export function city(view, ctx, tab = 'map') {
         line(P(u, 0), P(u, 1), 'rgba(255,59,78,.18)', 1, [[8, 10], 0]); line(P(0, u), P(1, u), 'rgba(255,59,78,.18)', 1, [[8, 10], 0]);
       }
       for (let k = 0; k < 14; k++) {
-        const lane = (k % 5) * 3 / n + 0.5 / n, p = (t * (0.04 + (k % 4) * 0.012) + k * 0.17) % 1;
+        const lane = (k % 4) * 3 / n + 0.5 / n, p = (t * (0.04 + (k % 4) * 0.012) + k * 0.17) % 1;
         if (k % 2 === 1 && F.gare && Math.abs(lane - 0.79) < .01 && 1 - p < .15) { if (1 - p > .11) circle(P(.15, lane + 0.008), 2.2, '#ff3b3b'); continue; } // arrêt avant la gare
         circle(k % 2 === 0 ? P(lane - 0.008, p) : P(1 - p, lane + 0.008), 2.2, k % 3 === 0 ? '#ff3b3b' : '#fff2c0');
       }
