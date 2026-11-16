@@ -66,7 +66,7 @@ export function city(view, ctx, tab = 'map') {
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
-      A = land ? Math.min(W * 0.42, H * 0.58) : W * 0.46; SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
+      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; // paysage : la tour des Toits tient en entier SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
@@ -203,7 +203,7 @@ export function city(view, ctx, tab = 'map') {
         if (k % 2 === 1 && F.gare && Math.abs(lane - 0.79) < .01 && 1 - p < .15) { if (1 - p > .11) circle(P(.15, lane + 0.008), 2.2, '#ff3b3b'); continue; } // arrêt avant la gare
         circle(k % 2 === 0 ? P(lane - 0.008, p) : P(1 - p, lane + 0.008), 2.2, k % 3 === 0 ? '#ff3b3b' : '#fff2c0');
       }
-      const home = P(0.5, 0.97); circle(home, 5, C.green); circle(home, 5 + (t * 12) % 14, 'rgba(124,242,154,.4)', 2);
+      const home = P(0.5, 0.97); // ton repaire (point vert) : dessiné après les bâtiments
       const pins = []; // contacts présents : dessinés après tous les bâtiments, posés sur le toit du lieu
       for (const b of (F.gare ? [...items, ...gareDyn(t)].sort((a, c) => (a.u + a.v) - (c.u + c.v)) : items)) {
         if (b.draw) { b.draw(); continue; }
@@ -245,6 +245,7 @@ export function city(view, ctx, tab = 'map') {
         const x = top[0] + (k - (n - 1) / 2) * 8, y = top[1] - 7;
         g.fillStyle = 'rgba(3,9,14,.85)'; g.beginPath(); g.arc(x, y - 2.5, 3.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 4.4, 3.2, 0, Math.PI, 0); g.fill();
         g.fillStyle = C.amber; g.beginPath(); g.arc(x, y - 2.5, 2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 3.2, 2.2, 0, Math.PI, 0); g.fill(); } });
+      circle(home, 5, C.green); circle(home, 5 + (t * 12) % 14, 'rgba(124,242,154,.4)', 2); // ton repaire, au premier plan
       // météo par-dessus la ville
       if (weather === 1 || weather === 2) {
         const heavy = weather === 2;
