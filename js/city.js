@@ -61,6 +61,7 @@ export function city(view, ctx, tab = 'map') {
     const bunker = Wd.bunkerUnlocked(), spots = Wd.SPOTS.filter(s => s.placeId !== 'bunker' || bunker);
     // Projection isométrique ; en paysage (écran d'ordinateur) la ville est centrée dans un cadre plus large que haut.
     const LM = (id) => (id === 'roofs' && F.toits) ? [0.05, 0.44, 'antenna'] : (LANDMARKS[id] || [0.05, 0.05, 'sign']);
+    const BK = [58, -46]; // décalage de l'étiquette du Bunker (px)
     let W = 0, H = 0, A = 0, SW = 0, OY = 0;
     const proj = (_W, _H, u, v, z = 0) => [W / 2 + (u - v) * A, OY + (u + v) * A * 0.55 - z * SW];
     const layout = () => {
@@ -78,6 +79,7 @@ export function city(view, ctx, tab = 'map') {
         const lab = document.createElement('button'); lab.className = 'maplabel';
         // Toits de Zone Zéro : l'étiquette est posée en haut de la tour (le toit), le reste au pied de chaque lieu
         Object.assign(lab.style, { left: (base[0] - 50) + 'px', top: ((sp.placeId === 'roofs' && F.toits) ? topY + 6 : base[1] + 2) + 'px' });
+        if (sp.placeId === 'bunker') Object.assign(lab.style, { left: (base[0] - 50 + BK[0]) + 'px', top: (base[1] + 2 + BK[1]) + 'px' }); // décalé en haut à droite, dans un espace libre
         lab.innerHTML = `<b style="color:${open ? '#e8f4f8' : C.dim}">${esc(pl.name)}</b><span class="mono" style="color:${!open ? (F.ferme ? rgba(C.red, .7) : C.red) : left > 0 ? C.dim : pl.color}">${!open ? (F.ferme ? 'fermé · ouvre à ' + String(sp.open).padStart(2, '0') + 'h' : 'FERMÉ') : left > 0 ? '↻ ' + Wd.fmtLeft(left) : Wd.hoursLabel(sp)}</span>`;
         if (!open && F.ferme) lab.style.opacity = .6;
         hit.onclick = lab.onclick = () => go(sp.placeId);
@@ -264,6 +266,8 @@ export function city(view, ctx, tab = 'map') {
         const x = top[0] + (k - (n - 1) / 2) * 8, y = top[1] - 7;
         g.fillStyle = 'rgba(3,9,14,.85)'; g.beginPath(); g.arc(x, y - 2.5, 3.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 4.4, 3.2, 0, Math.PI, 0); g.fill();
         g.fillStyle = C.amber; g.beginPath(); g.arc(x, y - 2.5, 2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 3.2, 2.2, 0, Math.PI, 0); g.fill(); } });
+      if (bunker) { const bs = Wd.spot('bunker'), lmB = LM('bunker'), a = P(bs.x, bs.y, lmB[1]), b2 = P(bs.x, bs.y + lmB[0]); // trait qui relie l'étiquette au Bunker
+        line([a[0], a[1] - 4], [b2[0] + BK[0], b2[1] + BK[1] + 30], 'rgba(255,46,62,.55)', 1, [[3, 3], 0]); }
       circle(home, 5, C.green); circle(home, 5 + (t * 12) % 14, 'rgba(124,242,154,.4)', 2); // ton repaire, au premier plan
       // météo par-dessus la ville
       if (weather === 1 || weather === 2) {
