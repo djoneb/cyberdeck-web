@@ -349,7 +349,7 @@ const EXP_WEATHER = ['', 'La pluie acide te colle à la peau tout le long du tra
 function expRecap(a, who, mult, xp, cash, aff, district) {
   const lines = [`Départ pour ${a.exp.place} : ${a.exp.brief.replace(/\.+$/, '')}.`];
   if (mult !== 100) { const ev = expEvent(a);
-    lines.push(`${ev.text} ` + (mult === 110 ? `Tu choisis de « ${ev.safe.toLowerCase()} » : la prudence paie.` : mult === 160 ? `Tu choisis de « ${ev.risky.toLowerCase()} » : ça passe, et la prise est plus grosse.` : `Tu choisis de « ${ev.risky.toLowerCase()} » : ça tourne mal, tu t'en sors de justesse.`)); }
+    lines.push(`${ev.text} ` + (mult === 110 ? `Ton choix : « ${ev.safe.toLowerCase()} ». La prudence paie.` : mult === 160 ? `Ton choix : « ${ev.risky.toLowerCase()} ». Ça passe, et la prise est plus grosse.` : `Ton choix : « ${ev.risky.toLowerCase()} ». Ça tourne mal, tu t'en sors de justesse.`)); }
   const w = weatherAt(a.start); if (w >= 1 && w <= 4) lines.push(EXP_WEATHER[w]);
   const minutes = Math.round((a.end - a.start) / 60000); lines.push(`Mission bouclée en ${minutes} min.`);
   return { contactId: a.exp.contactId, who, title: a.exp.title, place: a.exp.place, minutes, story: lines, quote: a.exp.report,
