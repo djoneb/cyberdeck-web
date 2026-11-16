@@ -76,7 +76,8 @@ export function city(view, ctx, tab = 'map') {
         const hit = document.createElement('button'); hit.className = 'maphit'; hit.title = pl.name;
         Object.assign(hit.style, { left: (base[0] - 26) + 'px', top: (topY - 10) + 'px', height: Math.max(30, base[1] - topY + 16) + 'px' });
         const lab = document.createElement('button'); lab.className = 'maplabel';
-        Object.assign(lab.style, { left: (base[0] - 50) + 'px', top: (base[1] + 2) + 'px' });
+        // Toits de Zone Zéro : l'étiquette est posée en haut de la tour (le toit), le reste au pied de chaque lieu
+        Object.assign(lab.style, { left: (base[0] - 50) + 'px', top: ((sp.placeId === 'roofs' && F.toits) ? topY + 6 : base[1] + 2) + 'px' });
         lab.innerHTML = `<b style="color:${open ? '#e8f4f8' : C.dim}">${esc(pl.name)}</b><span class="mono" style="color:${!open ? (F.ferme ? rgba(C.red, .7) : C.red) : left > 0 ? C.dim : pl.color}">${!open ? (F.ferme ? 'fermé · ouvre à ' + String(sp.open).padStart(2, '0') + 'h' : 'FERMÉ') : left > 0 ? '↻ ' + Wd.fmtLeft(left) : Wd.hoursLabel(sp)}</span>`;
         if (!open && F.ferme) lab.style.opacity = .6;
         hit.onclick = lab.onclick = () => go(sp.placeId);
@@ -241,9 +242,9 @@ export function city(view, ctx, tab = 'map') {
       }
       // contacts sur place : repère posé sur le toit du lieu, toujours au premier plan
       pins.forEach(([id, top]) => { const n = Wd.present(id).length; for (let k = 0; k < n; k++) {
-        const x = top[0] + (k - (n - 1) / 2) * 11, y = top[1] - 10;
-        line([x, y + 2], [x, top[1]], rgba(C.amber, .7), 1.2); circle([x, y], 6.5, 'rgba(3,9,14,.9)'); circle([x, y], 4.5, C.amber);
-        circle([x, y], 7 + (t * 6 + k) % 5, rgba(C.amber, .35 * (1 - ((t * 6 + k) % 5) / 5)), 1.5); } });
+        const x = top[0] + (k - (n - 1) / 2) * 8, y = top[1] - 7;
+        g.fillStyle = 'rgba(3,9,14,.85)'; g.beginPath(); g.arc(x, y - 2.5, 3.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 4.4, 3.2, 0, Math.PI, 0); g.fill();
+        g.fillStyle = C.amber; g.beginPath(); g.arc(x, y - 2.5, 2, 0, 7); g.fill(); g.beginPath(); g.ellipse(x, y + 2.6, 3.2, 2.2, 0, Math.PI, 0); g.fill(); } });
       // météo par-dessus la ville
       if (weather === 1 || weather === 2) {
         const heavy = weather === 2;
