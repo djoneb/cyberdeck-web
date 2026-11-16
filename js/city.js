@@ -66,7 +66,7 @@ export function city(view, ctx, tab = 'map') {
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
-      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; SW = A / 0.46; /* paysage : la tour des Toits tient en entier */ OY = land ? H * (F.ring ? 0.95 : 0.97) - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
+      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * (F.ring ? 0.44 : 0.46); SW = A / 0.46; /* paysage : la tour des Toits tient en entier */ OY = land ? H * (F.ring ? 0.95 : 0.97) - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
@@ -191,17 +191,25 @@ export function city(view, ctx, tab = 'map') {
         g.fillStyle = rg; g.beginPath(); g.arc(0, 0, SW * 0.26, 0, 7); g.fill(); g.restore();
       });
       quad([P(0, 0.30), P(0.06, 0.30), P(0.06, 1), P(0, 1)], '#0b2a55'); line(P(0.06, 0.30), P(0.06, 1), 'rgba(61,123,255,.5)', 1.5);
-      if (F.ring) { // boulevard périphérique : longe la ville par la gauche, passe en bas et remonte à droite
-        const R0 = 1.008, R1 = 1.05, RM = (R0 + R1) / 2, asph = night ? '#0a121a' : '#101c26';
-        quad([P(-0.02, R0), P(R1, R0), P(R1, R1), P(-0.02, R1)], asph); quad([P(R0, -0.02), P(R1, -0.02), P(R1, R0), P(R0, R0)], asph);
-        line(P(-0.02, R0), P(R0, R0), 'rgba(140,170,190,.35)', 1); line(P(R0, -0.02), P(R0, R0), 'rgba(140,170,190,.35)', 1);
-        line(P(-0.02, R1), P(R1, R1), 'rgba(140,170,190,.25)', 1); line(P(R1, -0.02), P(R1, R1), 'rgba(140,170,190,.25)', 1);
-        line(P(-0.02, RM), P(RM, RM), 'rgba(255,59,78,.22)', 1, [[8, 10], 0]); line(P(RM, -0.02), P(RM, RM), 'rgba(255,59,78,.22)', 1, [[8, 10], 0]);
-        for (let q = 0.04; q < 1.04; q += .083) { circle(P(q, R1 + .004), 1.4, rgba('#ffe2b0', night ? .8 : .3)); circle(P(R1 + .004, q), 1.4, rgba('#ffe2b0', night ? .8 : .3)); }
-        // voitures : deux sens de circulation sur le boucle gauche → bas → droite
-        const ringPt = (d, off) => d < 1.05 ? P(-0.02 + d, RM + off) : P(RM + off, R0 - (d - 1.05) - .03);
-        for (let k = 0; k < 8; k++) { const dir = k % 2, sp = 0.035 + (k % 3) * 0.01, d = ((t * sp + k * 0.27) % 1) * 2.1, dd = dir ? 2.1 - d : d;
-          circle(ringPt(dd, dir ? -0.009 : 0.009), 2.1, dir ? '#ff3b3b' : '#fff2c0'); } }
+      if (F.ring) { // boulevard périphérique : fait tout le tour de la ville, toutes les avenues s'y raccordent (plus aucune route ne sort)
+        const a0 = -0.042, a1 = -0.006, b0 = 1.006, b1 = 1.042, mA = (a0 + a1) / 2, mB = (b0 + b1) / 2, asph = night ? '#0a121a' : '#101c26';
+        quad([P(a0, a0), P(b1, a0), P(b1, a1), P(a0, a1)], asph); quad([P(a0, b0), P(b1, b0), P(b1, b1), P(a0, b1)], asph);
+        quad([P(a0, a1), P(a1, a1), P(a1, b0), P(a0, b0)], asph); quad([P(b0, a1), P(b1, a1), P(b1, b0), P(b0, b0)], asph);
+        // raccords : chaque avenue est prolongée jusqu'au boulevard
+        for (let i = 0; i <= 12; i += 3) { const u = i / 12 + 0.5 / 12; if (u > 1) continue;
+          quad([P(u - 0.025, a1), P(u + 0.025, a1), P(u + 0.025, 0), P(u - 0.025, 0)], '#111e28'); quad([P(u - 0.025, 1), P(u + 0.025, 1), P(u + 0.025, b0), P(u - 0.025, b0)], '#111e28');
+          quad([P(a1, u - 0.025), P(0, u - 0.025), P(0, u + 0.025), P(a1, u + 0.025)], '#111e28'); quad([P(1, u - 0.025), P(b0, u - 0.025), P(b0, u + 0.025), P(1, u + 0.025)], '#111e28'); }
+        const edgeIn = 'rgba(140,170,190,.3)', edgeOut = 'rgba(140,170,190,.22)';
+        [[[a1, a1], [b0, a1]], [[b0, a1], [b0, b0]], [[b0, b0], [a1, b0]], [[a1, b0], [a1, a1]]].forEach(([p, q]) => line(P(...p), P(...q), edgeIn, 1));
+        [[[a0, a0], [b1, a0]], [[b1, a0], [b1, b1]], [[b1, b1], [a0, b1]], [[a0, b1], [a0, a0]]].forEach(([p, q]) => line(P(...p), P(...q), edgeOut, 1));
+        [[[mA, mA], [mB, mA]], [[mB, mA], [mB, mB]], [[mB, mB], [mA, mB]], [[mA, mB], [mA, mA]]].forEach(([p, q]) => line(P(...p), P(...q), 'rgba(255,59,78,.22)', 1, [[8, 10], 0]));
+        for (let q = 0.04; q < 1.0; q += .083) { const c = rgba('#ffe2b0', night ? .8 : .3); circle(P(q, b1 + .004), 1.4, c); circle(P(b1 + .004, q), 1.4, c); circle(P(q, a0 - .004), 1.2, c); circle(P(a0 - .004, q), 1.2, c); }
+        // voitures : tournent autour de la ville, dans les deux sens
+        const side = mB - mA, per = side * 4;
+        const ringPt = (d, off) => { d = ((d % per) + per) % per; const k = Math.floor(d / side), f = d - k * side;
+          return k === 0 ? P(mA + f, mA - off) : k === 1 ? P(mB + off, mA + f) : k === 2 ? P(mB - f, mB + off) : P(mA - off, mB - f); };
+        for (let k = 0; k < 10; k++) { const dir = k % 2, sp = 0.025 + (k % 3) * 0.007, d = ((t * sp + k * 0.21) % 1) * per;
+          circle(ringPt(dir ? per - d : d, dir ? -0.009 : 0.009), 2.1, dir ? '#ff3b3b' : '#fff2c0'); } }
       const n = 12;
       for (let i = 0; i <= n; i += 3) {
         const u = i / n + 0.5 / n; if (u > 1) continue;
