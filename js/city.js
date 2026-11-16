@@ -85,7 +85,7 @@ export function city(view, ctx, tab = 'map') {
     };
     layout();
     const ro = new ResizeObserver(() => { if (Math.abs(wrap.clientWidth - W) > 2) layout(); }); ro.observe(wrap); ctx.onLeave(() => ro.disconnect());
-    const items = [...(F.gare ? [{ u: 0.11, v: 0.86, s: 0.03, h: 0.05, gare: true, neon: '#ff4fa3', seed: 3 }] : []), ...towers().filter(b => !F.gare || !(b.u < .22 && b.v > .72)), ...spots.map(sp => { const lm = LM(sp.placeId); return { u: sp.x, v: sp.y, s: lm[0], h: lm[1], neon: Wd.place(sp.placeId).color, seed: hashCode(sp.placeId), spot: sp.placeId }; })]
+    const items = [...(F.gare ? [{ u: 0.11, v: 0.77, s: 0.03, h: 0.05, gare: true, neon: '#ff4fa3', seed: 3 }] : []), ...towers().filter(b => !F.gare || !((b.u < .22 && b.v > .72) || b.u < .17)), ...spots.map(sp => { const lm = LM(sp.placeId); return { u: sp.x, v: sp.y, s: lm[0], h: lm[1], neon: Wd.place(sp.placeId).color, seed: hashCode(sp.placeId), spot: sp.placeId }; })]
       .sort((a, b) => (a.u + a.v) - (b.u + b.v));
     const frame = (ms) => {
       const t = ms / 1000, phase = Wd.phase(), weather = Wd.weather(), night = phase === 3, now = Date.now(), clear = weather === 0;
@@ -107,13 +107,46 @@ export function city(view, ctx, tab = 'map') {
         for (let k = -2; k <= 2; k++) { g.beginPath(); g.ellipse(c[0], c[1], Math.abs(rx * k / 2.6) + .1, rh, 0, Math.PI, 0); g.stroke(); }
         g.beginPath(); g.ellipse(c[0], c[1], rx, ry, 0, 0, 7); g.stroke(); g.shadowBlur = 0;
         if (open) for (let k = 0; k < 3; k++) { const ang = Math.sin(t * 1.3 + k * 2) * 0.6; line([c[0], c[1] - rh], [c[0] + ang * SW * 0.25, c[1] - rh - SW * 0.35], rgba(glow, 0.25), 6); } };
-      const gare = (b, t) => { const u = b.u, v0 = b.v - .09, v1 = b.v + .09, w = .028, z = .045;
-        quad([P(u - w, v1), P(u + w, v1), P(u + w, v1, .012), P(u - w, v1, .012)], '#0e1c27'); quad([P(u + w, v1), P(u + w, v0), P(u + w, v0, .012), P(u + w, v1, .012)], '#15283a');
-        for (let k = 0; k <= 8; k++) { const v = v0 + (v1 - v0) * k / 8; g.strokeStyle = rgba('#c8d4e0', k % 4 ? .35 : .7); g.lineWidth = k % 4 ? 1 : 1.5; g.beginPath();
-          for (let a = 0; a <= 10; a++) { const th = Math.PI * a / 10, p = P(u + Math.cos(th) * w, v, .012 + Math.sin(th) * z); a ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); } g.stroke(); }
-        line(P(u, v0, .012 + z), P(u, v1, .012 + z), rgba('#c8d4e0', .6), 1.2);
-        line(P(u, v1, .03), P(u, 1.02, .03), '#2a3a48', 3); line(P(u, v1, .032), P(u, 1.02, .032), rgba('#ff4fa3', .6), 1);
-        const tv = v1 + .02 + ((t * .03) % 1) * .2; if (tv < 1) { const a0 = P(u, tv, .036), a1 = P(u, Math.min(1, tv + .06), .036); line(a0, a1, '#e2e4ea', 4); line(a0, a1, rgba('#9fd8ff', .9), 1.2); } };
+      // Gare Zéro : socle ; la voie aérienne, la rame et les arches sont triées par profondeur à chaque image (le train passe sous les arches)
+      const GU = 0.11, GV0 = 0.77, GV1 = 0.95, GW = .028, GZ = .045, ZR = .03;
+      const gare = () => { quad([P(GU - GW, GV1), P(GU + GW, GV1), P(GU + GW, GV1, .012), P(GU - GW, GV1, .012)], '#0e1c27'); quad([P(GU + GW, GV1), P(GU + GW, GV0), P(GU + GW, GV0, .012), P(GU + GW, GV1, .012)], '#15283a'); };
+      const gareDyn = (t) => { const out = [];
+        // gare terminus : voie aérienne qui vient du haut de la ville et descend jusqu'au quai, sous les arches (butoir au bout)
+        const ZP = .018, zr = () => ZP; // voie droite, à la hauteur du quai
+        for (let v = 0; v < GV1 - .005; v += .03) { const vb = Math.min(GV1 - .005, v + .03);
+          out.push({ u: GU, v: vb, draw: () => { if (v < GV0 - .02 && Math.round(v / .03) % 2 === 0) line(P(GU, v, 0), P(GU, v, zr(v)), '#1c2a36', 2);
+            line(P(GU - .004, v, zr(v)), P(GU - .004, vb, zr(vb)), '#2a3a48', 2.5); line(P(GU + .004, v, zr(v)), P(GU + .004, vb, zr(vb)), '#2a3a48', 2.5);
+            line(P(GU, v, zr(v) + .001), P(GU, vb, zr(vb) + .001), rgba('#ff4fa3', .55), 1); } }); }
+        out.push({ u: GU, v: GV1, draw: () => { const a = P(GU - .01, GV1 - .004, ZP), b = P(GU + .01, GV1 - .004, ZP); line(a, b, '#ff3b4e', 3); circle(P(GU, GV1 - .004, ZP + .006), 2, '#ff3b4e'); } });
+        // TGV : motrices profilées aux deux bouts, 2 voitures ; arrive du haut, s'arrête à quai, repart vers le haut
+        const cyc = 30, s0 = (t % cyc) / cyc, ease = (x) => x * x * (3 - 2 * x), STOP = GV1 - .012, LEN = .17;
+        const vf = s0 < .35 ? -.05 + (STOP + .05) * ease(s0 / .35) : s0 < .62 ? STOP : STOP - (STOP + .25) * Math.pow((s0 - .62) / .38, 2);
+        const lit = night ? '#ffe9b0' : '#9fd8ff', w2 = .0105, h = .015, nose = .03;
+        const seg = [[0, nose, 'tail'], [nose, .085, 'car'], [.085, .14, 'car'], [.14, LEN, 'head']]; // de l'arrière (haut) vers l'avant (quai)
+        seg.forEach(([a0, a1, kind]) => { const va = vf - LEN + a0, vb = vf - LEN + a1; if (vb < 0) return; const vA = Math.max(0, va);
+          out.push({ u: GU, v: vb + .002, draw: () => { const z0 = zr((vA + vb) / 2) + .004;
+            if (kind === 'car') {
+              quad([P(GU + w2, vb, z0), P(GU + w2, vA, z0), P(GU + w2, vA, z0 + h), P(GU + w2, vb, z0 + h)], '#141820');
+              quad([P(GU - w2, vA, z0 + h), P(GU + w2, vA, z0 + h), P(GU + w2, vb, z0 + h), P(GU - w2, vb, z0 + h)], '#262c36');
+              quad([P(GU - w2, vb, z0), P(GU + w2, vb, z0), P(GU + w2, vb, z0 + h), P(GU - w2, vb, z0 + h)], '#0c0f14');
+              quad([P(GU + w2, vb - .003, z0 + .008), P(GU + w2, vA + .003, z0 + .008), P(GU + w2, vA + .003, z0 + .012), P(GU + w2, vb - .003, z0 + .012)], rgba(lit, night ? .9 : .8));
+              line(P(GU + w2, vA, z0 + .004), P(GU + w2, vb, z0 + .004), '#ff4fa3', 1.6);
+            } else { // motrice : bec allongé vers l'extrémité
+              const tipV = kind === 'head' ? vb : vA, baseV = kind === 'head' ? vA : vb, zt = z0 + .003;
+              quad([P(GU + w2, baseV, z0), P(GU + w2, baseV, z0 + h), P(GU + w2 * .35, tipV, zt + .003), P(GU + w2 * .35, tipV, z0)], '#10141a');
+              quad([P(GU - w2, baseV, z0 + h), P(GU + w2, baseV, z0 + h), P(GU + w2 * .35, tipV, zt + .003), P(GU - w2 * .35, tipV, zt + .003)], '#222830');
+              const m = (baseV * .6 + tipV * .4); quad([P(GU - w2 * .75, baseV, z0 + h - .001), P(GU + w2 * .75, baseV, z0 + h - .001), P(GU + w2 * .55, m, z0 + .011), P(GU - w2 * .55, m, z0 + .011)], rgba('#1a2a3a', .95));
+              quad([P(GU - w2 * .7, baseV, z0 + h - .002), P(GU + w2 * .7, baseV, z0 + h - .002), P(GU + w2 * .5, m, z0 + .011), P(GU - w2 * .5, m, z0 + .011)], rgba('#7af3ff', .55));
+              line(P(GU + w2, baseV, z0 + .004), P(GU + w2 * .35, tipV, z0 + .003), '#ff4fa3', 1.6);
+              if (kind === 'head' && vf > 0) { const hl = P(GU, tipV, z0 + .003); circle(hl, night ? 4.5 : 2.5, rgba('#eaf6ff', night ? .95 : .7)); }
+              if (kind === 'tail' && va >= 0) { g.fillStyle = '#ff3b4e'; const tl = P(GU, tipV, z0 + .004); g.fillRect(tl[0] - 2, tl[1] - 1, 4, 2); }
+            } } }); });
+        // arches de la halle, dessinées par-dessus quand le train est à quai
+        out.push({ u: GU, v: GV1 + .003, draw: () => {
+          for (let k = 0; k <= 8; k++) { const v = GV0 + (GV1 - GV0) * k / 8; g.strokeStyle = rgba('#c8d4e0', k % 4 ? .35 : .7); g.lineWidth = k % 4 ? 1 : 1.5; g.beginPath();
+            for (let a = 0; a <= 10; a++) { const th = Math.PI * a / 10, p = P(GU + Math.cos(th) * GW, v, .012 + Math.sin(th) * GZ); a ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); } g.stroke(); }
+          line(P(GU, GV0, .012 + GZ), P(GU, GV1, .012 + GZ), rgba('#c8d4e0', .6), 1.2); } });
+        return out; };
       const circle = (p, r, col, stroke) => { g.beginPath(); g.arc(p[0], p[1], r, 0, 7); if (stroke) { g.strokeStyle = col; g.lineWidth = stroke; g.stroke(); } else { g.fillStyle = col; g.fill(); } };
       // ciel : cycle du soleil (lever, après-midi, soirée, nuit), assombri ou ensablé selon la météo
       const mix = (hex, to, k) => { const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16), c = (sh) => Math.round(((a >> sh) & 255) * (1 - k) + ((b >> sh) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
@@ -162,18 +195,21 @@ export function city(view, ctx, tab = 'map') {
         const u = i / n + 0.5 / n; if (u > 1) continue;
         quad([P(u - 0.025, 0), P(u + 0.025, 0), P(u + 0.025, 1), P(u - 0.025, 1)], '#111e28');
         quad([P(0, u - 0.025), P(1, u - 0.025), P(1, u + 0.025), P(0, u + 0.025)], '#111e28');
-        line(P(u, 0), P(u, 1), 'rgba(255,59,78,.18)', 1, [[8, 10], t * 25]); line(P(0, u), P(1, u), 'rgba(255,59,78,.18)', 1, [[8, 10], t * 25]);
+        line(P(u, 0), P(u, 1), 'rgba(255,59,78,.18)', 1, [[8, 10], 0]); line(P(0, u), P(1, u), 'rgba(255,59,78,.18)', 1, [[8, 10], 0]);
       }
       for (let k = 0; k < 14; k++) {
         const lane = (k % 5) * 3 / n + 0.5 / n, p = (t * (0.04 + (k % 4) * 0.012) + k * 0.17) % 1;
+        if (k % 2 === 1 && F.gare && Math.abs(lane - 0.79) < .01 && 1 - p < .15) { if (1 - p > .11) circle(P(.15, lane + 0.008), 2.2, '#ff3b3b'); continue; } // arrêt avant la gare
         circle(k % 2 === 0 ? P(lane - 0.008, p) : P(1 - p, lane + 0.008), 2.2, k % 3 === 0 ? '#ff3b3b' : '#fff2c0');
       }
       const home = P(0.5, 0.97); circle(home, 5, C.green); circle(home, 5 + (t * 12) % 14, 'rgba(124,242,154,.4)', 2);
-      for (const b of items) {
+      const pins = []; // contacts présents : dessinés après tous les bâtiments, posés sur le toit du lieu
+      for (const b of (F.gare ? [...items, ...gareDyn(t)].sort((a, c) => (a.u + a.v) - (c.u + c.v)) : items)) {
+        if (b.draw) { b.draw(); continue; }
         const s = b.s, z = b.h, sp = b.spot ? Wd.spot(b.spot) : null, open = sp ? Wd.isOpen(sp) : true, glow = b.spot && !open ? C.dim : b.neon;
-        if (b.spot === 'market' && F.bazar) { bazar(b, glow, t); if (b.spot) circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
-        if (b.spot === 'club' && F.dome) { dome(b, glow, t, open); circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
-        if (b.gare) { gare(b, t); continue; }
+        if (b.spot === 'market' && F.bazar) { bazar(b, glow, t); pins.push([b.spot, P(b.u, b.v, .03)]); if (b.spot) circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
+        if (b.spot === 'club' && F.dome) { dome(b, glow, t, open); pins.push([b.spot, P(b.u, b.v, .07)]); circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
+        if (b.gare) { gare(); continue; }
         const fl = P(b.u - s, b.v + s), fr = P(b.u + s, b.v + s), br = P(b.u + s, b.v - s);
         quad([fl, fr, P(b.u + s, b.v + s, z), P(b.u - s, b.v + s, z)], '#0e1c27');
         quad([fr, br, P(b.u + s, b.v - s, z), P(b.u + s, b.v + s, z)], '#15283a');
@@ -200,9 +236,14 @@ export function city(view, ctx, tab = 'map') {
         else if (style === 'cross') { g.fillStyle = C.red; g.fillRect(top[0] - 2, top[1] - 12, 4, 14); g.fillRect(top[0] - 7, top[1] - 7, 14, 4); }
         else if (style === 'hazard') circle([top[0], top[1] - 6], 6, rgba(C.red, 0.4 + 0.5 * pulse));
         else if (style === 'sign') { g.fillStyle = rgba(glow, 0.6 + 0.4 * pulse); g.fillRect(top[0] - 12, top[1] - 12, 24, 7); }
-        if (b.spot) { circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * pulse)); Wd.present(b.spot).forEach((_, k) => circle([top[0] + 14 + k * 9, top[1] - 20], 4, C.amber)); }
+        if (b.spot) { circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * pulse)); pins.push([b.spot, top]); }
         else if (b.h > 0.2) line(P(b.u - s, b.v + s, z), P(b.u + s, b.v + s, z), rgba(b.neon, 0.7), 2);
       }
+      // contacts sur place : repère posé sur le toit du lieu, toujours au premier plan
+      pins.forEach(([id, top]) => { const n = Wd.present(id).length; for (let k = 0; k < n; k++) {
+        const x = top[0] + (k - (n - 1) / 2) * 11, y = top[1] - 10;
+        line([x, y + 2], [x, top[1]], rgba(C.amber, .7), 1.2); circle([x, y], 6.5, 'rgba(3,9,14,.9)'); circle([x, y], 4.5, C.amber);
+        circle([x, y], 7 + (t * 6 + k) % 5, rgba(C.amber, .35 * (1 - ((t * 6 + k) % 5) / 5)), 1.5); } });
       // météo par-dessus la ville
       if (weather === 1 || weather === 2) {
         const heavy = weather === 2;
