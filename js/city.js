@@ -8,7 +8,7 @@ import { DOSSIERS } from './gamedata.js';
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/\n/g, '<br>');
 const C = { red: '#e8505b', cyan: '#6ff3f0', amber: '#f6b35c', green: '#7cf29a', dim: '#7f9aa2', primary: '#ff3b4e' };
 // Améliorations de la carte (identiques à l'appli) : tour des Toits haute + hologramme, gare voûtée, étals du Bazar en néon, tempête magnétique
-const F = { toits: true, gare: true, bazar: true, mag: true };
+const F = { toits: true, gare: true, bazar: true, mag: true, ring: true };
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 
 const LANDMARKS = { bar: [0.045, 0.05, 'sign'], roofs: [0.05, 0.34, 'antenna'], market: [0.07, 0.02, 'stalls'], laundry: [0.04, 0.05, 'sign'],
@@ -66,7 +66,7 @@ export function city(view, ctx, tab = 'map') {
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
-      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; SW = A / 0.46; /* paysage : la tour des Toits tient en entier */ OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
+      A = land ? Math.min(W * 0.42, H * (F.toits ? 0.5 : 0.58)) : W * 0.46; SW = A / 0.46; /* paysage : la tour des Toits tient en entier */ OY = land ? H * (F.ring ? 0.95 : 0.97) - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
@@ -191,6 +191,17 @@ export function city(view, ctx, tab = 'map') {
         g.fillStyle = rg; g.beginPath(); g.arc(0, 0, SW * 0.26, 0, 7); g.fill(); g.restore();
       });
       quad([P(0, 0.30), P(0.06, 0.30), P(0.06, 1), P(0, 1)], '#0b2a55'); line(P(0.06, 0.30), P(0.06, 1), 'rgba(61,123,255,.5)', 1.5);
+      if (F.ring) { // boulevard périphérique : longe la ville par la gauche, passe en bas et remonte à droite
+        const R0 = 1.008, R1 = 1.05, RM = (R0 + R1) / 2, asph = night ? '#0a121a' : '#101c26';
+        quad([P(-0.02, R0), P(R1, R0), P(R1, R1), P(-0.02, R1)], asph); quad([P(R0, -0.02), P(R1, -0.02), P(R1, R0), P(R0, R0)], asph);
+        line(P(-0.02, R0), P(R0, R0), 'rgba(140,170,190,.35)', 1); line(P(R0, -0.02), P(R0, R0), 'rgba(140,170,190,.35)', 1);
+        line(P(-0.02, R1), P(R1, R1), 'rgba(140,170,190,.25)', 1); line(P(R1, -0.02), P(R1, R1), 'rgba(140,170,190,.25)', 1);
+        line(P(-0.02, RM), P(RM, RM), 'rgba(255,59,78,.22)', 1, [[8, 10], 0]); line(P(RM, -0.02), P(RM, RM), 'rgba(255,59,78,.22)', 1, [[8, 10], 0]);
+        for (let q = 0.04; q < 1.04; q += .083) { circle(P(q, R1 + .004), 1.4, rgba('#ffe2b0', night ? .8 : .3)); circle(P(R1 + .004, q), 1.4, rgba('#ffe2b0', night ? .8 : .3)); }
+        // voitures : deux sens de circulation sur le boucle gauche → bas → droite
+        const ringPt = (d, off) => d < 1.05 ? P(-0.02 + d, RM + off) : P(RM + off, R0 - (d - 1.05) - .03);
+        for (let k = 0; k < 8; k++) { const dir = k % 2, sp = 0.035 + (k % 3) * 0.01, d = ((t * sp + k * 0.27) % 1) * 2.1, dd = dir ? 2.1 - d : d;
+          circle(ringPt(dd, dir ? -0.009 : 0.009), 2.1, dir ? '#ff3b3b' : '#fff2c0'); } }
       const n = 12;
       for (let i = 0; i <= n; i += 3) {
         const u = i / n + 0.5 / n; if (u > 1) continue;
@@ -203,7 +214,7 @@ export function city(view, ctx, tab = 'map') {
         if (k % 2 === 1 && F.gare && Math.abs(lane - 0.79) < .01 && 1 - p < .15) { if (1 - p > .11) circle(P(.15, lane + 0.008), 2.2, '#ff3b3b'); continue; } // arrêt avant la gare
         circle(k % 2 === 0 ? P(lane - 0.008, p) : P(1 - p, lane + 0.008), 2.2, k % 3 === 0 ? '#ff3b3b' : '#fff2c0');
       }
-      const home = P(0.5, 0.97); // ton repaire (point vert) : dessiné après les bâtiments
+      const home = P(0.5, F.ring ? 0.94 : 0.97); // ton repaire (point vert) : dessiné après les bâtiments
       const pins = []; // contacts présents : dessinés après tous les bâtiments, posés sur le toit du lieu
       for (const b of (F.gare ? [...items, ...gareDyn(t)].sort((a, c) => (a.u + a.v) - (c.u + c.v)) : items)) {
         if (b.draw) { b.draw(); continue; }
