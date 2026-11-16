@@ -114,13 +114,13 @@ export const PHASES = ['LEVER DU SOLEIL', 'APRÈS-MIDI', 'SOIRÉE', 'NUIT'];
 export const isNight = (h = hour()) => phase(h) === 3;
 export const phaseBonus = (p = phase()) => p === 2 ? 10 : p === 3 ? 25 : 0;
 /** Météo : change toutes les 4 heures, même tirage que le téléphone (Random(Int)). 0 clair, 1 pluie acide, 2 orage, 3 sable. */
-/** Périodes de 3 à 5 h, chacune avec sa météo, jamais deux fois la même d'affilée (même tirage que le téléphone).
+/** Périodes de 2 à 3 h, chacune avec sa météo, jamais deux fois la même d'affilée (même tirage que le téléphone).
  *  0 clair, 1 pluie acide, 2 orage, 3 tempête de sable, 4 tempête magnétique. */
 export function segments(day) {
   const r = new KRandom(day * 31 + 7, true), pick = (n) => n < 35 ? 0 : n < 60 ? 1 : n < 75 ? 2 : n < 87 ? 3 : 4;
   const out = []; let h = 0, prev = -1;
   while (h < 24) {
-    const len = 3 + r.nextIntUntil(3);
+    const len = 2 + r.nextIntUntil(2);
     let w = pick(r.nextIntUntil(100));
     if (w === prev) w = pick(r.nextIntUntil(100));
     if (w === prev) w = (w + 1) % 5;

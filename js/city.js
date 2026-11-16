@@ -7,6 +7,8 @@ import { DOSSIERS } from './gamedata.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/\n/g, '<br>');
 const C = { red: '#e8505b', cyan: '#6ff3f0', amber: '#f6b35c', green: '#7cf29a', dim: '#7f9aa2', primary: '#ff3b4e' };
+// Améliorations de la carte (identiques à l'appli) : tour des Toits haute + hologramme, gare voûtée, étals du Bazar en néon, tempête magnétique
+const F = { toits: true, gare: true, bazar: true, mag: true };
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 
 const LANDMARKS = { bar: [0.045, 0.05, 'sign'], roofs: [0.05, 0.34, 'antenna'], market: [0.07, 0.02, 'stalls'], laundry: [0.04, 0.05, 'sign'],
@@ -58,36 +60,60 @@ export function city(view, ctx, tab = 'map') {
     const wrap = body.querySelector('.map'), cv = wrap.querySelector('canvas'), g = cv.getContext('2d'), labels = wrap.querySelector('.maplabels');
     const bunker = Wd.bunkerUnlocked(), spots = Wd.SPOTS.filter(s => s.placeId !== 'bunker' || bunker);
     // Projection isométrique ; en paysage (écran d'ordinateur) la ville est centrée dans un cadre plus large que haut.
+    const LM = (id) => (id === 'roofs' && F.toits) ? [0.05, 0.44, 'antenna'] : (LANDMARKS[id] || [0.05, 0.05, 'sign']);
     let W = 0, H = 0, A = 0, SW = 0, OY = 0;
     const proj = (_W, _H, u, v, z = 0) => [W / 2 + (u - v) * A, OY + (u + v) * A * 0.55 - z * SW];
     const layout = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       W = wrap.clientWidth; const land = W > 720; H = land ? Math.min(W * 0.46, window.innerHeight * 0.62) : W / 0.95; wrap.style.height = H + 'px';
-      A = land ? Math.min(W * 0.42, H * 0.58) : W * 0.46; SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * 0.30;
+      A = land ? Math.min(W * 0.42, H * 0.58) : W * 0.46; SW = A / 0.46; OY = land ? H * 0.97 - 1.1 * A : H * (F.toits ? 0.40 : 0.30);
       cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; g.setTransform(dpr, 0, 0, dpr, 0, 0);
       labels.innerHTML = '';
       spots.forEach(sp => {
-        const pl = Wd.place(sp.placeId), lm = LANDMARKS[sp.placeId] || [0.05, 0.05, 'sign'];
+        const pl = Wd.place(sp.placeId), lm = LM(sp.placeId);
         const base = proj(W, H, sp.x, sp.y + lm[0]), topY = proj(W, H, sp.x, sp.y, lm[1])[1];
         const open = Wd.isOpen(sp), left = Wd.cooldownLeft(sp.placeId);
         const hit = document.createElement('button'); hit.className = 'maphit'; hit.title = pl.name;
         Object.assign(hit.style, { left: (base[0] - 26) + 'px', top: (topY - 10) + 'px', height: Math.max(30, base[1] - topY + 16) + 'px' });
         const lab = document.createElement('button'); lab.className = 'maplabel';
         Object.assign(lab.style, { left: (base[0] - 50) + 'px', top: (base[1] + 2) + 'px' });
-        lab.innerHTML = `<b style="color:${open ? '#e8f4f8' : C.dim}">${esc(pl.name)}</b><span class="mono" style="color:${!open ? C.red : left > 0 ? C.dim : pl.color}">${!open ? 'FERMÉ' : left > 0 ? '↻ ' + Wd.fmtLeft(left) : Wd.hoursLabel(sp)}</span>`;
+        lab.innerHTML = `<b style="color:${open ? '#e8f4f8' : C.dim}">${esc(pl.name)}</b><span class="mono" style="color:${!open ? (F.ferme ? rgba(C.red, .7) : C.red) : left > 0 ? C.dim : pl.color}">${!open ? (F.ferme ? 'fermé · ouvre à ' + String(sp.open).padStart(2, '0') + 'h' : 'FERMÉ') : left > 0 ? '↻ ' + Wd.fmtLeft(left) : Wd.hoursLabel(sp)}</span>`;
+        if (!open && F.ferme) lab.style.opacity = .6;
         hit.onclick = lab.onclick = () => go(sp.placeId);
         labels.append(hit, lab);
       });
     };
     layout();
     const ro = new ResizeObserver(() => { if (Math.abs(wrap.clientWidth - W) > 2) layout(); }); ro.observe(wrap); ctx.onLeave(() => ro.disconnect());
-    const items = [...towers(), ...spots.map(sp => { const lm = LANDMARKS[sp.placeId] || [0.05, 0.05, 'sign']; return { u: sp.x, v: sp.y, s: lm[0], h: lm[1], neon: Wd.place(sp.placeId).color, seed: hashCode(sp.placeId), spot: sp.placeId }; })]
+    const items = [...(F.gare ? [{ u: 0.11, v: 0.86, s: 0.03, h: 0.05, gare: true, neon: '#ff4fa3', seed: 3 }] : []), ...towers().filter(b => !F.gare || !(b.u < .22 && b.v > .72)), ...spots.map(sp => { const lm = LM(sp.placeId); return { u: sp.x, v: sp.y, s: lm[0], h: lm[1], neon: Wd.place(sp.placeId).color, seed: hashCode(sp.placeId), spot: sp.placeId }; })]
       .sort((a, b) => (a.u + a.v) - (b.u + b.v));
     const frame = (ms) => {
       const t = ms / 1000, phase = Wd.phase(), weather = Wd.weather(), night = phase === 3, now = Date.now(), clear = weather === 0;
       const P = (u, v, z = 0) => proj(W, H, u, v, z);
       const quad = (pts, fill, stroke, lw = 1) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } };
       const line = (a, b, col, lw, dash) => { g.strokeStyle = col; g.lineWidth = lw; if (dash) { g.setLineDash(dash[0]); g.lineDashOffset = dash[1]; } g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.setLineDash([]); };
+      const holo = (p, t) => { const c = [p[0], p[1] - SW * 0.05 + Math.sin(t * 1.5) * 2]; g.save(); g.translate(c[0], c[1]);
+        g.shadowColor = C.cyan; g.shadowBlur = 10; g.strokeStyle = rgba(C.cyan, .9); g.lineWidth = 1.3; g.rotate(Math.sin(t * .8) * .2);
+        g.beginPath(); g.moveTo(0, -8); g.lineTo(7, 0); g.lineTo(0, 8); g.lineTo(-7, 0); g.closePath(); g.moveTo(-7, 0); g.lineTo(7, 0); g.stroke();
+        g.rotate(-Math.sin(t * .8) * .2); g.scale(1, .32); g.strokeStyle = rgba('#ff4fa3', .85); g.beginPath(); g.arc(0, 0, 15, t, t + 5.6); g.stroke(); g.shadowBlur = 0; g.restore(); };
+      const bazar = (b, glow, t) => { const cols = ['#ff4fa3', '#39e6ff', '#f6b35c', '#7cf29a'];
+        for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const u = b.u - .04 + i * .04, v = b.v - .04 + j * .04, k = i * 3 + j, c2 = cols[k % 4], s2 = .013;
+          quad([P(u - s2, v + s2), P(u + s2, v + s2), P(u + s2, v + s2, .012), P(u - s2, v + s2, .012)], '#0e1c27'); quad([P(u + s2, v + s2), P(u + s2, v - s2), P(u + s2, v - s2, .012), P(u + s2, v + s2, .012)], '#15283a');
+          const T = [P(u - s2 * 1.25, v - s2 * 1.25, .022), P(u + s2 * 1.25, v - s2 * 1.25, .022), P(u + s2 * 1.25, v + s2 * 1.25, .018), P(u - s2 * 1.25, v + s2 * 1.25, .018)];
+          quad(T, '#1b3346'); g.shadowColor = c2; g.shadowBlur = 6; quad(T, null, rgba(c2, .9), 1.3); g.shadowBlur = 0; } };
+      const dome = (b, glow, t, open) => { const c = P(b.u, b.v), rx = A * 0.075, ry = rx * 0.55, rh = SW * 0.06;
+        g.beginPath(); g.ellipse(c[0], c[1], rx, rh, 0, Math.PI, 0); g.ellipse(c[0], c[1], rx, ry, 0, 0, Math.PI); g.fillStyle = '#1b2a40'; g.fill();
+        g.shadowColor = glow; g.shadowBlur = 8; g.strokeStyle = rgba(glow, .7); g.lineWidth = 1;
+        for (let k = -2; k <= 2; k++) { g.beginPath(); g.ellipse(c[0], c[1], Math.abs(rx * k / 2.6) + .1, rh, 0, Math.PI, 0); g.stroke(); }
+        g.beginPath(); g.ellipse(c[0], c[1], rx, ry, 0, 0, 7); g.stroke(); g.shadowBlur = 0;
+        if (open) for (let k = 0; k < 3; k++) { const ang = Math.sin(t * 1.3 + k * 2) * 0.6; line([c[0], c[1] - rh], [c[0] + ang * SW * 0.25, c[1] - rh - SW * 0.35], rgba(glow, 0.25), 6); } };
+      const gare = (b, t) => { const u = b.u, v0 = b.v - .09, v1 = b.v + .09, w = .028, z = .045;
+        quad([P(u - w, v1), P(u + w, v1), P(u + w, v1, .012), P(u - w, v1, .012)], '#0e1c27'); quad([P(u + w, v1), P(u + w, v0), P(u + w, v0, .012), P(u + w, v1, .012)], '#15283a');
+        for (let k = 0; k <= 8; k++) { const v = v0 + (v1 - v0) * k / 8; g.strokeStyle = rgba('#c8d4e0', k % 4 ? .35 : .7); g.lineWidth = k % 4 ? 1 : 1.5; g.beginPath();
+          for (let a = 0; a <= 10; a++) { const th = Math.PI * a / 10, p = P(u + Math.cos(th) * w, v, .012 + Math.sin(th) * z); a ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); } g.stroke(); }
+        line(P(u, v0, .012 + z), P(u, v1, .012 + z), rgba('#c8d4e0', .6), 1.2);
+        line(P(u, v1, .03), P(u, 1.02, .03), '#2a3a48', 3); line(P(u, v1, .032), P(u, 1.02, .032), rgba('#ff4fa3', .6), 1);
+        const tv = v1 + .02 + ((t * .03) % 1) * .2; if (tv < 1) { const a0 = P(u, tv, .036), a1 = P(u, Math.min(1, tv + .06), .036); line(a0, a1, '#e2e4ea', 4); line(a0, a1, rgba('#9fd8ff', .9), 1.2); } };
       const circle = (p, r, col, stroke) => { g.beginPath(); g.arc(p[0], p[1], r, 0, 7); if (stroke) { g.strokeStyle = col; g.lineWidth = stroke; g.stroke(); } else { g.fillStyle = col; g.fill(); } };
       // ciel : cycle du soleil (lever, après-midi, soirée, nuit), assombri ou ensablé selon la météo
       const mix = (hex, to, k) => { const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16), c = (sh) => Math.round(((a >> sh) & 255) * (1 - k) + ((b >> sh) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
@@ -113,6 +139,15 @@ export function city(view, ctx, tab = 'map') {
         for (let k = 0; k < 5; k++) { const rr = RInt(k * 13); const cx = ((rr.nextFloat() + t * 0.004 * (1 + k % 2)) % 1) * W, cy = H * (0.04 + rr.nextFloat() * 0.16);
           g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(cx, cy, W * 0.08, H * 0.012, 0, 0, 7); g.fill(); }
       }
+      if (weather === 4 && F.mag) { // rideaux d'aurore dans le ciel, derrière la ville
+        g.save(); g.globalCompositeOperation = 'lighter';
+        for (let b = 0; b < 3; b++) { const col = ['#5cffb0', '#b98cff', '#39e6ff'][b], base = H * (0.10 + b * 0.07), amp = H * 0.035, len = H * (0.16 - b * 0.03);
+          for (let x = 0; x <= W; x += 2) { const y = base + Math.sin(x / W * 5 + t * (0.35 + b * 0.12) + b * 2) * amp + Math.sin(x / W * 13 - t * 0.6) * amp * 0.3;
+            const k = 0.5 + 0.5 * Math.sin(x * 0.09 + t * 1.6 + b * 4), a = (0.07 + 0.12 * k) * (0.6 + 0.4 * Math.sin(t * 0.7 + x / W * 3));
+            const gr = g.createLinearGradient(0, y - len, 0, y); gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(0.75, rgba(col, a)); gr.addColorStop(1, rgba(col, a * 1.8));
+            g.fillStyle = gr; g.fillRect(x, y - len, 2.6, len); } }
+        g.restore();
+      }
       quad([P(0, 0), P(1, 0), P(1, 1), P(0, 1)], ((c) => weather === 3 ? mix(c, '#5a3a1a', 0.35) : c)(['#1a2438', '#15324a', '#1c1430', '#07131c'][phase]));
       Wd.DISTRICTS.forEach(d => {
         const pts = spots.filter(s => s.district === d.id); if (!pts.length) return;
@@ -136,12 +171,20 @@ export function city(view, ctx, tab = 'map') {
       const home = P(0.5, 0.97); circle(home, 5, C.green); circle(home, 5 + (t * 12) % 14, 'rgba(124,242,154,.4)', 2);
       for (const b of items) {
         const s = b.s, z = b.h, sp = b.spot ? Wd.spot(b.spot) : null, open = sp ? Wd.isOpen(sp) : true, glow = b.spot && !open ? C.dim : b.neon;
+        if (b.spot === 'market' && F.bazar) { bazar(b, glow, t); if (b.spot) circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
+        if (b.spot === 'club' && F.dome) { dome(b, glow, t, open); circle(P(b.u, b.v + s + 0.01), 16, rgba(glow, 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3 + b.u * 10)))); continue; }
+        if (b.gare) { gare(b, t); continue; }
         const fl = P(b.u - s, b.v + s), fr = P(b.u + s, b.v + s), br = P(b.u + s, b.v - s);
         quad([fl, fr, P(b.u + s, b.v + s, z), P(b.u - s, b.v + s, z)], '#0e1c27');
         quad([fr, br, P(b.u + s, b.v - s, z), P(b.u + s, b.v + s, z)], '#15283a');
         quad([P(b.u - s, b.v - s, z), P(b.u + s, b.v - s, z), P(b.u + s, b.v + s, z), P(b.u - s, b.v + s, z)], '#1b3346', rgba(glow, b.spot ? 0.9 : 0.25), b.spot ? 2 : 1);
         const rows = Math.max(1, Math.min(14, Math.floor(z * SW / 9))), wr = RInt(b.seed);
-        for (let row = 0; row < rows; row++) for (let col = 0; col < 3; col++) {
+        if (F.fenetres && !(b.spot === 'club' && F.dome) && !(b.spot === 'market' && F.bazar)) { const fr2 = RInt(b.seed + 7), nr = Math.max(1, Math.floor(z * SW / 7)), nc = Math.max(2, Math.round(2 * s * A / 6));
+          [0, 1].forEach(side => { for (let row = 0; row < nr; row++) for (let col = 0; col < nc; col++) { const lit = fr2.nextIntUntil(100) < (night ? 55 : 30), warm = fr2.nextBoolean(); if (!lit) continue;
+            const a0 = (col + .25) / nc, a1 = (col + .75) / nc, h0 = z * (row + .3) / (nr + .1), h1 = h0 + z * .45 / (nr + .1);
+            const pt = (a, h) => side ? P(b.u + s, b.v + s - 2 * s * a, h) : P(b.u - s + 2 * s * a, b.v + s, h);
+            quad([pt(a0, h0), pt(a1, h0), pt(a1, h1), pt(a0, h1)], rgba(warm ? b.neon : '#ffe6a8', night ? .6 : .35)); } }); }
+        else for (let row = 0; row < rows; row++) for (let col = 0; col < 3; col++) {
           if (wr.nextIntUntil(100) < 35) continue;
           const f = (col + 0.5) / 3, zz = z * (row + 0.6) / (rows + 0.4), o = P(b.u - s + 2 * s * f, b.v + s, zz);
           const on = Math.sin(t * 0.7 + wr.nextFloat() * 50) > -0.6, warm = wr.nextBoolean();
@@ -149,7 +192,8 @@ export function city(view, ctx, tab = 'map') {
         }
         const top = P(b.u, b.v, z), pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.u * 10);
         const style = b.spot ? (LANDMARKS[b.spot] || [])[2] : null;
-        if (style === 'antenna') { const tip = [top[0], top[1] - SW * 0.08]; line(top, tip, '#8899aa', 2); circle(tip, 3.5, rgba(C.red, Math.floor(t * 2) % 2 === 0 ? 1 : 0.2)); }
+        if (style === 'antenna') { const tip = [top[0], top[1] - SW * 0.08]; line(top, tip, '#8899aa', 2); circle(tip, 3.5, rgba(C.red, Math.floor(t * 2) % 2 === 0 ? 1 : 0.2));
+          if (b.spot === 'roofs' && F.toits) holo(P(b.u - s * .3, b.v + s * .3, z), t); }
         else if (style === 'beams') for (let k = 0; k < 3; k++) { const ang = Math.sin(t * 1.3 + k * 2) * 0.6; line(top, [top[0] + ang * SW * 0.25, top[1] - SW * 0.35], rgba(glow, 0.25), 6); }
         else if (style === 'stalls') ['#ff4fa3', '#f6b35c', '#39e6ff', '#7cf29a'].forEach((c, k) => { const o = P(b.u - s * 0.6 + k * s * 0.4, b.v + s * 0.2, z + 0.012); g.fillStyle = rgba(c, 0.8); g.fillRect(o[0] - 5, o[1] - 3, 10, 5); });
         else if (style === 'crane') { const bc = P(b.u + s * 0.5, b.v - s * 0.5, z), tc = [bc[0], bc[1] - SW * 0.12]; line(bc, tc, C.amber, 2.5); line(tc, [tc[0] - SW * 0.09, tc[1] + 4], C.amber, 2.5); line([tc[0] - SW * 0.07, tc[1] + 3], [tc[0] - SW * 0.07, tc[1] + SW * 0.05], rgba(C.amber, 0.6), 1); }
@@ -172,7 +216,7 @@ export function city(view, ctx, tab = 'map') {
           g.fillStyle = `rgba(255,255,255,${(0.25 - cyc) * 1.6})`; g.fillRect(0, 0, W, H);
           const rr = RInt(Math.floor(t / 7)); let p0 = [W * (0.2 + rr.nextFloat() * 0.6), 0];
           for (let k = 0; k < 6; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.12, p0[1] + H * 0.07]; line(p0, p1, '#eaf4ff', 2.5); p0 = p1; } } }
-      } else if (weather === 4) {
+      } else if (weather === 4 && !F.mag) {
         // aurores magnétiques ondulantes et arcs électriques
         for (let b = 0; b < 4; b++) {
           const base = H * (0.06 + b * 0.06); g.strokeStyle = rgba(b % 2 ? '#b98cff' : '#5cffb0', 0.35); g.lineWidth = H * 0.03; g.beginPath();
@@ -181,6 +225,14 @@ export function city(view, ctx, tab = 'map') {
         }
         if (t % 3 < 0.15) { const rr = RInt(Math.floor(t / 3) + 99); let p0 = [rr.nextFloat() * W, H * 0.3 + rr.nextFloat() * H * 0.4];
           for (let k = 0; k < 5; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.1, p0[1] + (rr.nextFloat() - 0.5) * H * 0.08]; line(p0, p1, '#b98cff', 2); p0 = p1; } }
+      } else if (weather === 4) {
+        const veil = g.createLinearGradient(0, 0, 0, H); veil.addColorStop(0, 'rgba(40,10,80,.45)'); veil.addColorStop(.5, 'rgba(20,8,50,.18)'); veil.addColorStop(1, 'rgba(10,30,30,.12)'); g.fillStyle = veil; g.fillRect(0, 0, W, H);
+        for (let k = 0; k < 40; k++) { const rr = RInt(k * 17 + 5), x = rr.nextFloat() * W, y = ((rr.nextFloat() - t * (0.01 + rr.nextFloat() * 0.02)) % 1 + 1) % 1 * H;
+          circle([x, y], 1.1, rgba(k % 2 ? '#b98cff' : '#5cffb0', 0.35 + 0.35 * Math.sin(t * 3 + k))); }
+        const cyc = t % 2.6; if (cyc < 0.22) { const rr = RInt(Math.floor(t / 2.6) + 99), tw = items.filter(b => b.h > 0.15), b0 = tw[rr.nextIntUntil(Math.max(1, tw.length))];
+          if (b0) { let p0 = P(b0.u, b0.v, b0.h); const al = 1 - cyc / 0.22; g.shadowColor = '#d8b0ff'; g.shadowBlur = 12;
+            for (let k = 0; k < 7; k++) { const p1 = [p0[0] + (rr.nextFloat() - 0.5) * W * 0.06, p0[1] - H * 0.035]; line(p0, p1, rgba('#efe0ff', al), 1.8); if (k === 3) { let q = p1; for (let j = 0; j < 3; j++) { const q1 = [q[0] + (rr.nextFloat() - .3) * W * .05, q[1] - H * .025]; line(q, q1, rgba('#b98cff', al * .8), 1); q = q1; } } p0 = p1; }
+            g.shadowBlur = 0; circle(P(b0.u, b0.v, b0.h), 6 * al + 2, rgba('#d8b0ff', al * .6)); } }
       } else if (weather === 3) {
         const sd = g.createLinearGradient(0, 0, 0, H); sd.addColorStop(0, 'rgba(201,138,60,.35)'); sd.addColorStop(1, 'rgba(138,90,43,.25)'); g.fillStyle = sd; g.fillRect(0, 0, W, H);
         g.lineWidth = 1.4;
@@ -196,7 +248,7 @@ export function city(view, ctx, tab = 'map') {
         const pr = Wd.progress(a, now), pos = [home[0] + (to[0] - home[0]) * pr, home[1] + (to[1] - home[1]) * pr];
         circle(pos, 14, 'rgba(111,243,240,.3)'); circle(pos, 7, C.cyan);
       }
-      raf = requestAnimationFrame(frame);
+      if (!F.fige || F.anime) raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     // rappel de l'expédition, réputation, liste des lieux
