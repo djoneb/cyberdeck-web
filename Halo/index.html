@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halo · Launcher Android épuré</title>
+<meta name="description" content="Halo, un launcher Android épuré et fluide : verre givré, widgets, centre de contrôle, profils. Gratuit, sans publicité.">
+<meta name="theme-color" content="#0A1418">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta property="og:title" content="Halo · Launcher Android épuré">
+<meta property="og:description" content="Un écran d'accueil calme, fluide et à tes couleurs. Gratuit, sans publicité.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0A1418; --bg2: #0F1D22; --text: #F2F6F8; --dim: #A9B6BE; --faint: #6E7F88;
+    --accent: #9BEAD3; --accent2: #7FD6FF; --glass: rgba(255,255,255,.08); --line: rgba(255,255,255,.12);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+  /* lueur de fond */
+  .glow { position: fixed; inset: -20% -10% auto; height: 90vh; pointer-events: none; z-index: 0;
+    background: radial-gradient(40% 50% at 25% 30%, rgba(155,234,211,.16), transparent 70%), radial-gradient(35% 45% at 80% 20%, rgba(127,214,255,.12), transparent 70%); }
+  main, header, footer { position: relative; z-index: 1; }
+  main { overflow-x: clip; }
+
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: .02em; font-size: 18px; }
+  .brand img { width: 32px; height: 32px; }
+  .navlink { color: var(--dim); text-decoration: none; font-size: 14px; }
+  .navlink:hover { color: var(--text); }
+
+  /* héros */
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 48px 0 72px; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-top: 24px; gap: 40px; } }
+  .eyebrow { color: var(--accent); font-size: 13px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+  h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1.04; font-weight: 300; letter-spacing: -.02em; margin: 14px 0 18px; }
+  h1 b { font-weight: 600; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: var(--dim); font-size: 18px; max-width: 30em; margin: 0 0 32px; }
+  .cta { display: inline-flex; align-items: center; gap: 12px; padding: 16px 26px; border-radius: 999px; background: var(--accent); color: #0A1414;
+    font-weight: 600; font-size: 17px; text-decoration: none; box-shadow: 0 10px 40px rgba(155,234,211,.25); transition: transform .2s, box-shadow .2s; }
+  .cta:hover { transform: translateY(-2px); box-shadow: 0 14px 48px rgba(155,234,211,.35); }
+  .cta svg { width: 20px; height: 20px; }
+  .meta { color: var(--faint); font-size: 13px; margin-top: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font-size: 13px; background: rgba(255,255,255,.03); }
+
+  /* téléphones */
+  .stage { position: relative; height: 600px; }
+  @media (max-width: 900px) { .stage { height: 540px; } }
+  @media (max-width: 520px) { .stage { height: 470px; } }
+  .phone { position: absolute; width: 260px; aspect-ratio: 9 / 19.5; border-radius: 40px; padding: 9px; background: #05090B;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 30px 80px rgba(0,0,0,.55); }
+  .phone .scr { position: relative; width: 100%; height: 100%; border-radius: 32px; overflow: hidden; }
+  .stage .phone:nth-child(1) { left: 50%; top: 0; transform: translateX(-50%); z-index: 3; }
+  .stage .phone:nth-child(2) { left: 50%; top: 60px; transform: translateX(-118%) rotate(-7deg) scale(.88); z-index: 2; opacity: .9; }
+  .stage .phone:nth-child(3) { left: 50%; top: 60px; transform: translateX(18%) rotate(7deg) scale(.88); z-index: 1; opacity: .9; }
+  @media (max-width: 520px) {
+    .phone { width: 214px; border-radius: 34px; } .phone .scr { border-radius: 27px; }
+    .stage .phone:nth-child(2) { transform: translateX(-104%) rotate(-7deg) scale(.82); }
+    .stage .phone:nth-child(3) { transform: translateX(4%) rotate(7deg) scale(.82); }
+  }
+
+  /* fond d'écran Halo (dégradé « Aurore ») */
+  .wall { position: absolute; inset: 0; background:
+      radial-gradient(70% 45% at 20% 18%, rgba(155,234,211,.55), transparent 70%),
+      radial-gradient(60% 40% at 85% 55%, rgba(127,214,255,.45), transparent 70%),
+      radial-gradient(70% 50% at 30% 95%, rgba(183,166,255,.35), transparent 70%), #0B1A1F; }
+  .wall.b { background: radial-gradient(70% 45% at 80% 15%, rgba(183,166,255,.5), transparent 70%), radial-gradient(70% 50% at 15% 70%, rgba(155,234,211,.45), transparent 70%), #0C1620; }
+  .ui { position: absolute; inset: 0; padding: 30px 16px 14px; display: flex; flex-direction: column; font-size: 10px; }
+  .sb { position: absolute; top: 9px; left: 22px; right: 22px; display: flex; justify-content: space-between; font-size: 9px; color: rgba(255,255,255,.85); font-weight: 500; }
+  .clock { font-size: 56px; font-weight: 200; letter-spacing: -.03em; line-height: 1; margin-top: 18px; }
+  .date { font-size: 12px; color: rgba(255,255,255,.85); margin-top: 6px; }
+  .tip { font-size: 10px; color: rgba(255,255,255,.8); margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+  .tip i { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .gl { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 18px; }
+  .w-music { margin-top: 16px; padding: 10px; display: flex; gap: 10px; align-items: center; }
+  .cover { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #FF9EC4, #B7A6FF); flex: none; }
+  .w-music b { display: block; font-size: 11px; font-weight: 600; } .w-music span { color: rgba(255,255,255,.7); font-size: 9.5px; }
+  .w-row { display: flex; gap: 8px; margin-top: 8px; }
+  .w-sm { flex: 1; padding: 10px; } .w-sm b { font-size: 18px; font-weight: 300; display: block; } .w-sm span { color: rgba(255,255,255,.7); font-size: 9px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; margin-top: auto; padding: 0 2px; }
+  .ic { aspect-ratio: 1; border-radius: 30%; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,.2); }
+  .ic::after { content: ""; position: absolute; inset: 28%; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.9); }
+  .ic.sq::after { border-radius: 22%; } .ic.dot::after { inset: 38%; background: rgba(255,255,255,.9); border: 0; }
+  .ic.tri::after { border-radius: 4px; transform: rotate(45deg); inset: 32%; }
+  .dock { margin-top: 14px; padding: 9px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; border-radius: 24px; }
+  .bar { width: 34%; height: 4px; border-radius: 4px; background: rgba(255,255,255,.7); margin: 10px auto 0; }
+  .c1 { background: linear-gradient(135deg,#9BEAD3,#4FB79A); } .c2 { background: linear-gradient(135deg,#7FD6FF,#3B8FD9); } .c3 { background: linear-gradient(135deg,#FF9EC4,#E05A8E); }
+  .c4 { background: linear-gradient(135deg,#FFD58A,#E79A3C); } .c5 { background: linear-gradient(135deg,#B7A6FF,#7558E0); } .c6 { background: linear-gradient(135deg,#C9D3D8,#7E8C94); }
+  .c7 { background: linear-gradient(135deg,#A6F0A0,#47A84A); } .c8 { background: linear-gradient(135deg,#FF8F7A,#D9483B); }
+
+  /* tiroir */
+  .drawer { position: absolute; inset: 0; background: rgba(10,20,24,.55); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); }
+  .search { margin-top: 10px; padding: 9px 12px; border-radius: 999px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.65); font-size: 10px; display: flex; justify-content: space-between; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0 10px; } .tabs span { padding: 4px 9px; border-radius: 999px; font-size: 9px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.75); }
+  .tabs span.on { background: var(--accent); color: #0A1414; font-weight: 600; }
+  .lbl { color: rgba(255,255,255,.6); font-size: 9px; margin: 6px 0 8px; }
+  .dgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 8px; }
+  .dgrid .n { text-align: center; font-size: 8px; color: rgba(255,255,255,.8); margin-top: 4px; }
+
+  /* centre de contrôle */
+  .cc { position: absolute; inset: 0; background: rgba(205,225,232,.16); backdrop-filter: blur(26px) saturate(1.2); -webkit-backdrop-filter: blur(26px) saturate(1.2); }
+  .ccg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+  .t { border-radius: 18px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.14); aspect-ratio: 1; display: grid; place-items: center; }
+  .t.on { background: var(--accent); }
+  .t i { width: 36%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); }
+  .t.on i { border-color: #0A1414; }
+  .t.w2 { grid-column: span 2; aspect-ratio: auto; padding: 10px; display: block; text-align: left; }
+  .t.w2 b { font-size: 10px; display: block; } .t.w2 span { font-size: 8.5px; color: rgba(255,255,255,.7); }
+  .t.h2 { grid-row: span 2; aspect-ratio: auto; position: relative; overflow: hidden; }
+  .t.h2::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 62%; background: rgba(255,255,255,.85); }
+  .t.h2.v::after { height: 40%; }
+  .gear { position: absolute; right: 16px; bottom: 18px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.16); display: grid; place-items: center; }
+  .gear i { width: 10px; height: 10px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.9); }
+
+  /* sections */
+  section.block { padding: 72px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 300; letter-spacing: -.015em; margin: 0 0 12px; line-height: 1.15; }
+  h2 b { font-weight: 600; }
+  .sub { color: var(--dim); max-width: 40em; margin: 0 0 40px; }
+  .feats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .feats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .feats { grid-template-columns: 1fr; } }
+  .feat { padding: 24px; border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid var(--line); }
+  .feat .ico { width: 40px; height: 40px; border-radius: 12px; background: rgba(155,234,211,.12); display: grid; place-items: center; margin-bottom: 16px; }
+  .feat .ico svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .feat h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .feat p { margin: 0; color: var(--dim); font-size: 15px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: s; }
+  @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+  .step { padding: 22px 24px; border-radius: 20px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+  .step::before { counter-increment: s; content: counter(s); display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #0A1414; font-weight: 600; font-size: 14px; margin-bottom: 12px; }
+  .step h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; } .step p { margin: 0; color: var(--dim); font-size: 14.5px; }
+
+  .final { text-align: center; padding: 88px 0 96px; }
+  .final img { width: 72px; height: 72px; margin-bottom: 18px; }
+  .final .sub { margin: 0 auto 32px; }
+  footer { border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding-top: 24px; padding-bottom: 32px; }
+  footer a { color: var(--dim); text-decoration: none; } footer a:hover { color: var(--text); }
+
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .cta { transition: none; } }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="./"><img src="icon.svg" alt="">Halo</a>
+    <a class="navlink" href="#fonctions">Fonctions</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Launcher Android</div>
+        <h1>Ton téléphone,<br><b>plus calme.</b></h1>
+        <p class="lead">Halo remplace ton écran d'accueil par un espace épuré, fluide et à tes couleurs : du verre givré, des widgets utiles, un centre de contrôle et rien de superflu.</p>
+        <a class="cta dl" href="telecharger/" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+          Télécharger l'APK
+        </a>
+        <div class="meta" id="ver">Android 10 ou plus · fichier APK</div>
+        <div class="chips"><span class="chip">Gratuit</span><span class="chip">Sans publicité</span><span class="chip">Français · English</span><span class="chip">Mises à jour dans l'appli</span></div>
+      </div>
+
+      <div class="stage" aria-label="Aperçus de Halo : accueil, tiroir d'applis et centre de contrôle">
+        <!-- accueil -->
+        <div class="phone"><div class="scr"><div class="wall"></div><div class="ui">
+          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
+          <div class="clock">14:32</div>
+          <div class="date">Lundi 23 novembre</div>
+          <div class="tip"><i></i>Belle journée en vue, 12° et du soleil.</div>
+          <div class="gl w-music"><div class="cover"></div><div><b>Midnight City</b><span>M83</span></div></div>
+          <div class="w-row"><div class="gl w-sm"><b>12°</b><span>Ensoleillé</span></div><div class="gl w-sm"><b>3</b><span>rendez-vous</span></div></div>
+          <div class="grid"><div class="ic c1"></div><div class="ic c2 sq"></div><div class="ic c5 dot"></div><div class="ic c4 tri"></div></div>
+          <div class="gl dock"><div class="ic c7"></div><div class="ic c3 sq"></div><div class="ic c2 dot"></div><div class="ic c6"></div></div>
+          <div class="bar"></div>
+        </div></div></div>
+        <!-- tiroir -->
+        <div class="phone"><div class="scr"><div class="wall b"></div><div class="drawer"></div><div class="ui">
+          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
+          <div class="search"><span>Rechercher une appli</span><span>⌕</span></div>
+          <div class="tabs"><span class="on">Toutes</span><span>Dossiers</span><span>Récentes</span></div>
+          <div class="lbl">Suggérées maintenant</div>
+          <div class="dgrid">
+            <div><div class="ic c1"></div><div class="n">Messages</div></div><div><div class="ic c3 sq"></div><div class="n">Photos</div></div>
+            <div><div class="ic c2 dot"></div><div class="n">Météo</div></div><div><div class="ic c4"></div><div class="n">Agenda</div></div>
+          </div>
+          <div class="lbl" style="margin-top:12px">Toutes les applis</div>
+          <div class="dgrid">
+            <div><div class="ic c5"></div><div class="n">Musique</div></div><div><div class="ic c6 sq"></div><div class="n">Réglages</div></div>
+            <div><div class="ic c7 tri"></div><div class="n">Cartes</div></div><div><div class="ic c8 dot"></div><div class="n">Vidéo</div></div>
+            <div><div class="ic c2"></div><div class="n">Notes</div></div><div><div class="ic c1 sq"></div><div class="n">Banque</div></div>
+            <div><div class="ic c3"></div><div class="n">Réseau</div></div><div><div class="ic c4 dot"></div><div class="n">Horloge</div></div>
+          </div>
+        </div></div></div>
+        <!-- centre de contrôle -->
+        <div class="phone"><div class="scr"><div class="wall"></div><div class="cc"></div><div class="ui">
+          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
+          <div class="ccg">
+            <div class="t on"><i></i></div><div class="t on"><i></i></div><div class="t"><i></i></div><div class="t on"><i></i></div>
+            <div class="t w2"><b>Midnight City</b><span>M83 · en lecture</span></div><div class="t h2"></div><div class="t h2 v"></div>
+            <div class="t w2"><b>Lampe torche</b><span>Éteinte</span></div>
+            <div class="t"><i></i></div><div class="t on"><i></i></div><div class="t"><i></i></div><div class="t"><i></i></div>
+          </div>
+          <div class="gear"><i></i></div>
+        </div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="block" id="fonctions">
+    <div class="wrap">
+      <h2 class="reveal">Tout ce qu'il faut, <b>rien de plus.</b></h2>
+      <p class="sub reveal">Chaque fonction est là quand tu en as besoin, et s'efface le reste du temps.</p>
+      <div class="feats">
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg></div>
+          <h3>Verre givré</h3><p>Tiroir, dossiers et widgets en verre flou, aux couleurs de ton fond d'écran ou de ton thème.</p></div>
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></div>
+          <h3>Centre de contrôle</h3><p>Connexions, musique, luminosité, volume, lampe torche, à organiser librement, avec tes propres raccourcis.</p></div>
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 5V3M5.6 6.6 4.2 5.2M18.4 6.6l1.4-1.4"/><path d="M3 16h18M6 20h12"/></svg></div>
+          <h3>Météo du jour</h3><p>Une phrase sous la date (« prends ton parapluie vers 14h ») et une page météo détaillée.</p></div>
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h6"/><circle cx="18" cy="16" r="3"/></svg></div>
+          <h3>Gestes fluides</h3><p>Le tiroir et le centre de contrôle suivent ton doigt. Barre latérale sur les deux bords, double toucher pour verrouiller.</p></div>
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>Profils selon le moment</h3><p>Travail, maison, soirée : selon l'heure et le Wi-Fi, une page, une couleur et des applis mises de côté.</p></div>
+        <div class="feat reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></div>
+          <h3>Recherche complète</h3><p>Applis, contacts, fichiers, réglages du téléphone et calculs, depuis un seul champ.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <h2 class="reveal">Installer Halo <b>en une minute.</b></h2>
+      <p class="sub reveal">Halo n'est pas sur le Play Store : il s'installe depuis le fichier APK, puis se met à jour tout seul depuis ses réglages.</p>
+      <div class="steps">
+        <div class="step reveal"><h3>Télécharge l'APK</h3><p>Depuis ton téléphone Android, touche « Télécharger l'APK ».</p></div>
+        <div class="step reveal"><h3>Ouvre le fichier</h3><p>Android demande d'autoriser l'installation depuis ton navigateur : accepte pour cette fois.</p></div>
+        <div class="step reveal"><h3>Choisis Halo</h3><p>Appuie sur le bouton d'accueil et choisis Halo comme écran d'accueil par défaut.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <img src="icon.svg" alt="" class="reveal">
+      <h2 class="reveal">Essaie Halo.</h2>
+      <p class="sub reveal">Gratuit, sans publicité, sans compte. Tes réglages restent sur ton téléphone.</p>
+      <a class="cta dl reveal" href="telecharger/" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+        Télécharger l'APK
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Halo · imaginé par Benjamin Lambot</span>
+    <a href="../telecharger.html">Découvrir aussi Cyberdeck</a>
+  </div>
+</footer>
+
+<script>
+// apparition douce des sections
+(() => {
+  const els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return; }
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15 });
+  els.forEach(e => io.observe(e));
+})();
+// numéro de la dernière version (le bouton passe toujours par telecharger/, qui redirige vers GitHub)
+(async () => {
+  try {
+    const r = await fetch('https://api.github.com/repos/djoneb/cyberdeck-releases/releases?per_page=100');
+    if (!r.ok) return;
+    const rel = (await r.json()).filter(x => /^halo-\d+$/.test(x.tag_name) && !x.draft && !x.prerelease)
+      .sort((a, b) => +b.tag_name.slice(5) - +a.tag_name.slice(5))[0];
+    if (rel) document.getElementById('ver').textContent = 'Version ' + rel.tag_name.slice(5) + ' · Android 10 ou plus · fichier APK';
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
