@@ -54,20 +54,15 @@
   .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font-size: 13px; background: rgba(255,255,255,.03); }
 
   /* téléphones */
-  .stage { position: relative; height: 600px; }
-  @media (max-width: 900px) { .stage { height: 540px; } }
-  @media (max-width: 520px) { .stage { height: 470px; } }
+  /* la composition des trois téléphones est la même partout : sur petit écran, elle est réduite d'un bloc */
+  .stage { position: relative; height: 640px; }
+  .stage-in { position: absolute; left: 50%; top: 0; width: 620px; height: 640px; margin-left: -310px; transform-origin: 50% 0; }
   .phone { position: absolute; width: 260px; aspect-ratio: 9 / 19.5; border-radius: 40px; padding: 9px; background: #05090B;
     box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 30px 80px rgba(0,0,0,.55); }
   .phone .scr { position: relative; width: 100%; height: 100%; border-radius: 32px; overflow: hidden; }
-  .stage .phone:nth-child(1) { left: 50%; top: 0; transform: translateX(-50%); z-index: 3; }
-  .stage .phone:nth-child(2) { left: 50%; top: 60px; transform: translateX(-118%) rotate(-7deg) scale(.88); z-index: 2; opacity: .9; }
-  .stage .phone:nth-child(3) { left: 50%; top: 60px; transform: translateX(18%) rotate(7deg) scale(.88); z-index: 1; opacity: .9; }
-  @media (max-width: 520px) {
-    .phone { width: 214px; border-radius: 34px; } .phone .scr { border-radius: 27px; }
-    .stage .phone:nth-child(2) { transform: translateX(-104%) rotate(-7deg) scale(.82); }
-    .stage .phone:nth-child(3) { transform: translateX(4%) rotate(7deg) scale(.82); }
-  }
+  .stage-in .phone:nth-child(1) { left: 50%; top: 0; transform: translateX(-50%); z-index: 3; }
+  .stage-in .phone:nth-child(2) { left: 50%; top: 60px; transform: translateX(-118%) rotate(-7deg) scale(.88); z-index: 2; opacity: .9; }
+  .stage-in .phone:nth-child(3) { left: 50%; top: 60px; transform: translateX(18%) rotate(7deg) scale(.88); z-index: 1; opacity: .9; }
 
   /* fond d'écran Halo (dégradé « Aurore ») */
   .wall { position: absolute; inset: 0; background:
@@ -180,7 +175,7 @@
         <div class="chips"><span class="chip">Gratuit</span><span class="chip">Sans publicité</span><span class="chip">Français · English</span><span class="chip">Mises à jour dans l'appli</span></div>
       </div>
 
-      <div class="stage" aria-label="Aperçus de Halo : accueil, tiroir d'applis et centre de contrôle">
+      <div class="stage" id="stage" aria-label="Aperçus de Halo : accueil, tiroir d'applis et centre de contrôle"><div class="stage-in" id="stagein">
         <!-- accueil -->
         <div class="phone"><div class="scr"><div class="wall"></div><div class="ui">
           <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
@@ -222,7 +217,7 @@
           </div>
           <div class="gear"><i></i></div>
         </div></div></div>
-      </div>
+      </div></div>
     </section>
   </div>
 
@@ -280,6 +275,12 @@
 </footer>
 
 <script>
+// téléphones : même rendu qu'à l'écran large, réduit à la largeur disponible
+(() => {
+  const st = document.getElementById('stage'), inn = document.getElementById('stagein');
+  const fit = () => { const k = Math.min(1, st.clientWidth / 620); inn.style.transform = 'scale(' + k + ')'; st.style.height = (640 * k) + 'px'; };
+  fit(); addEventListener('resize', fit);
+})();
 // apparition douce des sections
 (() => {
   const els = document.querySelectorAll('.reveal');
