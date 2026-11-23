@@ -83,14 +83,14 @@
   .w-row { display: flex; gap: 8px; margin-top: 8px; }
   .w-sm { flex: 1; padding: 10px; } .w-sm b { font-size: 18px; font-weight: 300; display: block; } .w-sm span { color: rgba(255,255,255,.7); font-size: 9px; }
   .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; margin-top: auto; padding: 0 2px; }
-  .ic { aspect-ratio: 1; border-radius: 30%; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,.2); }
-  .ic::after { content: ""; position: absolute; inset: 28%; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.9); }
-  .ic.sq::after { border-radius: 22%; } .ic.dot::after { inset: 38%; background: rgba(255,255,255,.9); border: 0; }
-  .ic.tri::after { border-radius: 4px; transform: rotate(45deg); inset: 32%; }
+  .ic { aspect-ratio: 1; border-radius: 30%; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25); display: grid; place-items: center; }
+  .ic svg, .t svg, .gear svg, .sb svg, .tbar svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ic svg { width: 54%; height: 54%; color: #fff; }
+  .ic.lt svg { color: #1B2A30; }
   .dock { margin-top: 14px; padding: 9px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; border-radius: 24px; }
   .bar { width: 34%; height: 4px; border-radius: 4px; background: rgba(255,255,255,.7); margin: 10px auto 0; }
   .c1 { background: linear-gradient(135deg,#9BEAD3,#4FB79A); } .c2 { background: linear-gradient(135deg,#7FD6FF,#3B8FD9); } .c3 { background: linear-gradient(135deg,#FF9EC4,#E05A8E); }
-  .c4 { background: linear-gradient(135deg,#FFD58A,#E79A3C); } .c5 { background: linear-gradient(135deg,#B7A6FF,#7558E0); } .c6 { background: linear-gradient(135deg,#C9D3D8,#7E8C94); }
+  .c4 { background: linear-gradient(135deg,#FFD58A,#E79A3C); } .c5 { background: linear-gradient(135deg,#B7A6FF,#7558E0); } .c6 { background: linear-gradient(135deg,#C9D3D8,#7E8C94); } .c9 { background: linear-gradient(135deg,#F4F6F7,#C9D3D8); } .c10 { background: linear-gradient(135deg,#3A4A52,#151E23); }
   .c7 { background: linear-gradient(135deg,#A6F0A0,#47A84A); } .c8 { background: linear-gradient(135deg,#FF8F7A,#D9483B); }
 
   /* tiroir */
@@ -107,15 +107,21 @@
   .ccg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
   .t { border-radius: 18px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.14); aspect-ratio: 1; display: grid; place-items: center; }
   .t.on { background: var(--accent); }
-  .t i { width: 36%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); }
-  .t.on i { border-color: #0A1414; }
+  .t svg { width: 40%; height: 40%; color: #fff; }
+  .t.on svg { color: #0A1414; }
   .t.w2 { grid-column: span 2; aspect-ratio: auto; padding: 10px; display: block; text-align: left; }
   .t.w2 b { font-size: 10px; display: block; } .t.w2 span { font-size: 8.5px; color: rgba(255,255,255,.7); }
-  .t.h2 { grid-row: span 2; aspect-ratio: auto; position: relative; overflow: hidden; }
-  .t.h2::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 62%; background: rgba(255,255,255,.85); }
+  .t.h2 { grid-row: span 2; aspect-ratio: auto; position: relative; overflow: hidden; place-items: end center; }
+  .t.h2::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 62%; background: rgba(255,255,255,.88); }
   .t.h2.v::after { height: 40%; }
+  .t.h2 svg { position: relative; z-index: 1; width: 44%; height: auto; aspect-ratio: 1; margin-bottom: 10px; color: #1B2A30; }
+  .t.w2 .row { display: flex; align-items: center; gap: 8px; }
+  .t.w2 .row svg { width: 14px; height: 14px; flex: none; }
+  .t.w2 .row { gap: 6px; } .t.w2 .row b, .t.w2 .row span { white-space: nowrap; }
+  .tbar { display: flex; gap: 10px; margin-top: 5px; } .tbar svg { width: 11px; height: 11px; color: #fff; }
+  .sb .r { display: flex; gap: 4px; align-items: center; } .sb svg { width: 10px; height: 10px; }
   .gear { position: absolute; right: 16px; bottom: 18px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.16); display: grid; place-items: center; }
-  .gear i { width: 10px; height: 10px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.9); }
+  .gear svg { width: 15px; height: 15px; color: #fff; }
 
   /* sections */
   section.block { padding: 72px 0; border-top: 1px solid var(--line); }
@@ -143,11 +149,109 @@
   .final .sub { margin: 0 auto 32px; }
   footer { border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
   footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding-top: 24px; padding-bottom: 32px; }
+  .credits { display: flex; flex-direction: column; gap: 4px; } .credits b { color: var(--text); font-weight: 500; }
   footer a { color: var(--dim); text-decoration: none; } footer a:hover { color: var(--text); }
 
   .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
   .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .cta { transition: none; } }
+
+  /* ── téléphones (version 2, d'après de vraies captures de Halo) ── */
+  .phone svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .phone svg.f { fill: currentColor; stroke-width: 1.5; }
+  .v-wall { position: absolute; inset: 0; background:
+      radial-gradient(70% 45% at 20% 18%, rgba(155,234,211,.38), transparent 70%),
+      radial-gradient(60% 40% at 85% 55%, rgba(127,214,255,.32), transparent 70%),
+      radial-gradient(70% 50% at 30% 95%, rgba(155,234,211,.22), transparent 70%), #0A161B; }
+  .v-ui { position: absolute; inset: 0; padding: 26px 11px 8px; display: flex; flex-direction: column; color: #F2F2FA; font-size: 8px; }
+  .v-sb { position: absolute; top: 9px; left: 18px; right: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; font-weight: 600; }
+  .v-sb .r { display: flex; gap: 4px; align-items: center; } .v-sb svg { width: 10px; height: 10px; stroke-width: 2.6; }
+  .v-batt { font-style: normal; font-size: 7px; background: #fff; color: #000; border-radius: 3px; padding: 0 3px; font-weight: 700; }
+  .v-head { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+  .v-date { font-size: 15px; font-weight: 300; letter-spacing: .01em; }
+  .v-pill { display: flex; gap: 4px; align-items: center; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 8px; }
+  .v-pill svg { width: 9px; height: 9px; }
+  .v-tip { display: flex; gap: 5px; align-items: center; margin-top: 8px; font-size: 8.5px; color: rgba(255,255,255,.88); }
+  .v-tip svg { width: 11px; height: 11px; color: #9BEAD3; }
+  .v-search { margin: 18px 4px 0; padding: 6px 8px; border-radius: 5px; background: rgba(255,255,255,.12); display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,.7); font-size: 9px; }
+  .v-search svg { width: 10px; height: 10px; }
+  .v-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .v-card { background: rgba(255,255,255,.13); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 15px; padding: 9px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .v-clock { display: grid; place-items: center; align-content: center; gap: 6px; height: 104px; }
+  .v-clock b { font-size: 25px; font-weight: 200; letter-spacing: .02em; }
+  .v-clock i { font-style: normal; background: #9BEAD3; color: #0A1414; border-radius: 999px; padding: 4px 12px; font-size: 8px; }
+  .v-bat { display: flex; flex-direction: column; align-items: center; height: 104px; }
+  .v-ring { width: 40px; height: 40px; border-radius: 50%; background: conic-gradient(#9BEAD3 0 82%, rgba(255,255,255,.12) 0); display: grid; place-items: center; }
+  .v-ring span { width: 32px; height: 32px; border-radius: 50%; background: #3E5F5E; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; }
+  .v-ring small { font-size: 6px; }
+  .v-bat b { font-weight: 400; font-size: 9.5px; margin-top: 6px; } .v-bat > span { color: #9BEAD3; font-size: 7.5px; margin-top: 2px; }
+  .v-dots { display: flex; gap: 3px; margin-top: auto; } .v-dots i { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.35); } .v-dots i.on { background: #9BEAD3; }
+  .v-music { display: flex; gap: 8px; align-items: center; margin-top: 6px; border-radius: 18px; background: rgba(255,255,255,.13); }
+  .v-cover { width: 54px; height: 54px; border-radius: 9px; flex: none; background:
+      radial-gradient(60% 60% at 30% 30%, #CFF7EA, transparent 70%), radial-gradient(60% 60% at 75% 70%, #7FD6FF, transparent 70%), linear-gradient(135deg, #2E8F7A, #3B8FD9); }
+  .v-cover.s { width: 32px; height: 32px; border-radius: 7px; }
+  .v-mt { flex: 1; min-width: 0; } .v-mt b { display: block; font-size: 9.5px; font-weight: 400; } .v-mt > span { color: rgba(255,255,255,.6); font-size: 7.5px; }
+  .v-ctrl { display: flex; align-items: center; gap: 12px; margin-top: 5px; }
+  .v-ctrl svg { width: 10px; height: 10px; }
+  .v-ctrl em { width: 22px; height: 18px; border-radius: 999px; background: #9BEAD3; display: grid; place-items: center; color: #0A1414; }
+  .v-ctrl em svg { width: 9px; height: 9px; }
+  .v-ctrl.b { gap: 16px; justify-content: center; margin-top: 7px; } .v-ctrl.b svg { width: 11px; height: 11px; }
+  .v-meteo { position: relative; height: 98px; display: flex; flex-direction: column; }
+  .v-meteo > span { color: rgba(255,255,255,.7); font-size: 7px; } .v-meteo > svg { position: absolute; right: 9px; top: 9px; width: 20px; height: 20px; color: #9BEAD3; }
+  .v-meteo b { font-size: 22px; font-weight: 200; margin-top: 2px; } .v-meteo em { font-style: normal; font-size: 8px; margin-top: auto; } .v-meteo small { color: rgba(255,255,255,.65); font-size: 6.5px; margin-top: 2px; }
+  .v-agenda { height: 98px; } .v-ah { display: flex; justify-content: space-between; align-items: center; } .v-ah b { font-weight: 400; font-size: 9px; } .v-ah svg { width: 10px; height: 10px; color: #9BEAD3; }
+  .v-ev { border-left: 2px solid var(--c); padding-left: 6px; margin-top: 7px; } .v-ev b { display: block; font-weight: 400; font-size: 7.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .v-ev span { color: rgba(255,255,255,.6); font-size: 6px; }
+  .v-dock { margin-top: auto; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); border-radius: 18px; padding: 7px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .v-ri { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  .v-ri svg { width: 52%; height: 52%; stroke-width: 2.2; }
+  .v-dk { background: linear-gradient(160deg, #EAFBF5, #BFEBDD); color: #145446; }
+  .v-dk:nth-child(even) { background: linear-gradient(160deg, #E6F6FF, #B9E3F7); color: #144A66; }
+  .v-bar { width: 32%; height: 3px; border-radius: 3px; background: rgba(255,255,255,.85); margin: 9px auto 0; }
+  /* tiroir */
+  .v-drawer { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,22,26,.94) 0%, rgba(12,24,28,.8) 45%, rgba(12,24,28,.74) 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .v-handle { width: 22px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.4); margin: 10px auto 0; }
+  .v-dsearch { display: flex; gap: 5px; margin-top: 8px; align-items: center; }
+  .v-sf { flex: 1; display: flex; gap: 6px; align-items: center; padding: 7px 9px; border-radius: 999px; background: rgba(52,68,72,.6); color: rgba(255,255,255,.7); font-size: 8.5px; }
+  .v-sf svg { width: 10px; height: 10px; }
+  .v-rb { width: 26px; height: 26px; border-radius: 50%; background: rgba(52,68,72,.6); display: grid; place-items: center; } .v-rb svg { width: 11px; height: 11px; }
+  .v-seg { display: flex; margin-top: 8px; padding: 2px; border-radius: 999px; background: rgba(52,68,72,.45); }
+  .v-seg i, .v-chips i { font-style: normal; } .v-seg i { flex: 1; text-align: center; padding: 4px 0; border-radius: 999px; font-size: 7.5px; color: rgba(255,255,255,.85); }
+  .v-seg i.on, .v-chips i.on { background: #9BEAD3; color: #0A1414; }
+  .v-chips { display: flex; gap: 4px; margin-top: 6px; white-space: nowrap; overflow: hidden; } .v-chips i { padding: 4px 8px; border-radius: 999px; background: rgba(52,68,72,.5); font-size: 7.5px; }
+  .v-prof { display: flex; gap: 4px; align-items: center; color: rgba(255,255,255,.7); font-size: 7px; margin: 9px 0 5px 3px; } .v-prof svg { width: 8px; height: 8px; color: #9BEAD3; }
+  .v-pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 7px 4px; border-radius: 12px; background: rgba(60,86,90,.32); }
+  .v-agrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px 4px; margin-top: 9px; padding: 0 4px; }
+  .v-app { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+  .v-app .v-ri { width: 76%; } .v-app span { font-size: 6.5px; color: rgba(255,255,255,.88); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-live { background: #F5F5F7; color: #222; display: flex !important; flex-direction: column; justify-content: center; gap: 0; line-height: 1; }
+  .v-live small { font-size: 4.5px; color: #E5484D; } .v-live b { font-size: 11px; font-weight: 400; }
+  /* centre de contrôle */
+  .v-cc { position: absolute; inset: 0; background: rgba(10,22,26,.5); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .v-ccg { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 47px; gap: 7px; margin-top: 22px; padding: 0 1px; }
+  .v-ccg > *, .v-o { box-sizing: border-box; }
+  .v-blk { border-radius: 17px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); padding: 7px; position: relative; }
+  .v-o { font-style: normal; border-radius: 50%; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); display: grid; place-items: center; aspect-ratio: 1; width: 100%; }
+  .v-o svg { width: 38%; height: 38%; } .v-o.on { background: #9BEAD3; box-shadow: none; color: #0A1414; }
+  .v-o.sm { width: 26px; height: 26px; } .v-o.sm svg { width: 12px; height: 12px; }
+  .v-conn { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; height: 100%; align-items: center; }
+  .v-conn > .v-o { width: 36px; justify-self: center; }
+  .v-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; justify-items: center; }
+  .v-mini i { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .v-mini i.bl { background: #3B82F6; box-shadow: none; } .v-mini svg { width: 8px; height: 8px; }
+  .v-med { display: flex; flex-direction: column; } .v-mtop { display: flex; justify-content: space-between; }
+  .v-med b { font-weight: 400; font-size: 8.5px; margin-top: 6px; } .v-med > span { color: rgba(255,255,255,.6); font-size: 7px; }
+  .v-sl { position: relative; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); display: grid; place-items: end center; padding-bottom: 9px; }
+  .v-sl::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--f); background: #E8EAF0; }
+  .v-sl svg { position: relative; width: 12px; height: 12px; color: #1A1A2A; }
+  .v-a { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; border-radius: 50%; background: #9BEAD3; color: #0A1414; font-style: normal; font-size: 8px; display: grid; place-items: center; }
+  .v-profile { border-radius: 999px; background: #9BEAD3; color: #0A1414; display: flex; align-items: center; gap: 7px; padding: 0 6px; }
+  .v-profile > i { width: 30px; height: 30px; border-radius: 50%; background: #EFFBF7; display: grid; place-items: center; } .v-profile > i svg { width: 12px; height: 12px; color: #111; }
+  .v-profile b { display: block; font-weight: 400; font-size: 8.5px; } .v-profile span { font-size: 7px; opacity: .7; }
+  .v-torch { display: flex; flex-direction: column; } .v-torch b { font-weight: 400; font-size: 9px; margin-top: auto; } .v-torch span { color: rgba(255,255,255,.6); font-size: 7px; }
+  .v-pct { display: flex; flex-direction: column; justify-content: center; gap: 2px; } .v-pct svg { width: 30%; height: 30%; } .v-pct small { font-size: 6.5px; }
+  .v-add { background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+  .v-hint { margin-top: auto; text-align: center; font-size: 7px; color: rgba(255,255,255,.75); padding: 0 34px 14px; line-height: 1.5; }
+  .v-gear { position: absolute; right: 12px; bottom: 22px; width: 24px; } .v-gear svg { width: 12px; height: 12px; }
 </style>
 </head>
 <body>
@@ -177,45 +281,71 @@
 
       <div class="stage" id="stage" aria-label="Aperçus de Halo : accueil, tiroir d'applis et centre de contrôle"><div class="stage-in" id="stagein">
         <!-- accueil -->
-        <div class="phone"><div class="scr"><div class="wall"></div><div class="ui">
-          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
-          <div class="clock">14:32</div>
-          <div class="date">Lundi 23 novembre</div>
-          <div class="tip"><i></i>Belle journée en vue, 12° et du soleil.</div>
-          <div class="gl w-music"><div class="cover"></div><div><b>Midnight City</b><span>M83</span></div></div>
-          <div class="w-row"><div class="gl w-sm"><b>12°</b><span>Ensoleillé</span></div><div class="gl w-sm"><b>3</b><span>rendez-vous</span></div></div>
-          <div class="grid"><div class="ic c1"></div><div class="ic c2 sq"></div><div class="ic c5 dot"></div><div class="ic c4 tri"></div></div>
-          <div class="gl dock"><div class="ic c7"></div><div class="ic c3 sq"></div><div class="ic c2 dot"></div><div class="ic c6"></div></div>
-          <div class="bar"></div>
+        <div class="phone"><div class="scr"><div class="v-wall"></div><div class="v-ui">
+          <div class="v-sb"><span>14:32</span><span class="r"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-4M12 20v-9M18 20V6"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg><i class="v-batt">82</i></span></div>
+          <div class="v-head"><div class="v-date">Lun. 23 nov.</div><div class="v-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Maison</div></div>
+          <div class="v-tip"><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></svg>Il gèlera (-4°) : couvre-toi bien.</div>
+          <div class="v-search"><span>Rechercher</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/></svg></div>
+          <div class="v-row2">
+            <div class="v-card v-clock"><b>14:32</b><i>Lundi</i></div>
+            <div class="v-card v-bat"><div class="v-ring"><span>82<small>%</small></span></div><b>Batterie</b><span>64 Go libres</span><div class="v-dots"><i class="on"></i><i></i><i></i></div></div>
+          </div>
+          <div class="v-card v-music"><div class="v-cover"></div><div class="v-mt"><b>Neon Skyline</b><span>Lumen</span><div class="v-ctrl"><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M19 20 9 12l10-8z"/><path d="M5 19V5"/></svg><em><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></em><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="m5 4 10 8-10 8z"/><path d="M19 5v14"/></svg></div></div></div>
+          <div class="v-row2">
+            <div class="v-card v-meteo"><span>Bruxelles</span><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></svg><b>3°</b><em>Couvert</em><small>-1° / 5° · ressenti 1°</small></div>
+            <div class="v-card v-agenda"><div class="v-ah"><b>Lundi 23</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></div>
+              <div class="v-ev" style="--c:#E0736A"><b>Dîner chez Léa</b><span>mer. 25 · 19:00–21:00</span></div>
+              <div class="v-ev" style="--c:#8FE3E0"><b>Anniversaire de Tom</b><span>lun. 30 · Toute la journée</span></div></div>
+          </div>
+          <div class="v-dock">
+            <div class="v-ri v-dk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></div><div class="v-ri v-dk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>
+            <div class="v-ri v-dk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="v-ri v-dk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+            <div class="v-ri v-dk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
+          </div>
+          <div class="v-bar"></div>
         </div></div></div>
         <!-- tiroir -->
-        <div class="phone"><div class="scr"><div class="wall b"></div><div class="drawer"></div><div class="ui">
-          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
-          <div class="search"><span>Rechercher une appli</span><span>⌕</span></div>
-          <div class="tabs"><span class="on">Toutes</span><span>Dossiers</span><span>Récentes</span></div>
-          <div class="lbl">Suggérées maintenant</div>
-          <div class="dgrid">
-            <div><div class="ic c1"></div><div class="n">Messages</div></div><div><div class="ic c3 sq"></div><div class="n">Photos</div></div>
-            <div><div class="ic c2 dot"></div><div class="n">Météo</div></div><div><div class="ic c4"></div><div class="n">Agenda</div></div>
+        <div class="phone"><div class="scr"><div class="v-wall"></div><div class="v-drawer"></div><div class="v-ui">
+          <div class="v-sb"><span>14:32</span><span class="r"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-4M12 20v-9M18 20V6"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg><i class="v-batt">82</i></span></div>
+          <div class="v-handle"></div>
+          <div class="v-dsearch"><div class="v-sf"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Rechercher une appli</span></div><div class="v-rb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div><div class="v-rb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg></div></div>
+          <div class="v-seg"><i class="on">Grille</i><i>Liste</i><i>Fréquentes</i><i>Dossiers</i></div>
+          <div class="v-chips"><i class="on">Toutes</i><i>Outils</i><i>Productivité</i><i>Jeux</i><i>Autres</i></div>
+          <div class="v-prof"><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>Profil « Maison »</div>
+          <div class="v-pgrid">
+            <div class="v-app"><div class="v-ri " style="background:#1F2937;color:#7FD6FF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div><span>Visio</span></div><div class="v-app"><div class="v-ri " style="background:#FFD58A;color:#6B4A0E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><span>Notes</span></div><div class="v-app"><div class="v-ri " style="background:#1A73E8;color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div><span>Fichiers</span></div>
           </div>
-          <div class="lbl" style="margin-top:12px">Toutes les applis</div>
-          <div class="dgrid">
-            <div><div class="ic c5"></div><div class="n">Musique</div></div><div><div class="ic c6 sq"></div><div class="n">Réglages</div></div>
-            <div><div class="ic c7 tri"></div><div class="n">Cartes</div></div><div><div class="ic c8 dot"></div><div class="n">Vidéo</div></div>
-            <div><div class="ic c2"></div><div class="n">Notes</div></div><div><div class="ic c1 sq"></div><div class="n">Banque</div></div>
-            <div><div class="ic c3"></div><div class="n">Réseau</div></div><div><div class="ic c4 dot"></div><div class="n">Horloge</div></div>
+          <div class="v-agrid">
+            <div class="v-app"><div class="v-ri " style="background:linear-gradient(135deg,#FF6FA5,#B04CE0);color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span>Musique</span></div>
+            <div class="v-app"><div class="v-ri v-live"><small>LUN</small><b>23</b></div><span>Agenda</span></div>
+            <div class="v-app"><div class="v-ri " style="background:#fff;color:#2846B8"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></div><span>Appareil photo</span></div><div class="v-app"><div class="v-ri " style="background:#0E5E4A;color:#9BEAD3"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01"/></svg></div><span>Calculatrice</span></div>
+            <div class="v-app"><div class="v-ri " style="background:linear-gradient(135deg,#5AB4FF,#2F6FE0);color:#FFE27A"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></div><span>Météo</span></div><div class="v-app"><div class="v-ri " style="background:#fff;color:#E5484D"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div><span>Mail</span></div>
+            <div class="v-app"><div class="v-ri " style="background:#E9F7EC;color:#2E9E4F"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div><span>Cartes</span></div><div class="v-app"><div class="v-ri " style="background:#111;color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><span>Horloge</span></div>
+            <div class="v-app"><div class="v-ri " style="background:linear-gradient(135deg,#FFB86B,#FF5E8A);color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></div><span>Photos</span></div><div class="v-app"><div class="v-ri " style="background:#5F6B73;color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div><span>Réglages</span></div>
+            <div class="v-app"><div class="v-ri " style="background:#fff;color:#3B82F6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span>Messages</span></div><div class="v-app"><div class="v-ri " style="background:#fff;color:#2F7CF6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></div><span>Téléphone</span></div>
+            <div class="v-app"><div class="v-ri" style="background:#E5484D;color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div><span>Vidéo</span></div><div class="v-app"><div class="v-ri" style="background:#fff;color:#F2662B"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div><span>Navigateur</span></div><div class="v-app"><div class="v-ri" style="background:#fff;color:#3D7BE0"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div><span>Contacts</span></div><div class="v-app"><div class="v-ri" style="background:linear-gradient(135deg,#FFD58A,#F2662B);color:#fff"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div><span>Boutique</span></div>
           </div>
         </div></div></div>
         <!-- centre de contrôle -->
-        <div class="phone"><div class="scr"><div class="wall"></div><div class="cc"></div><div class="ui">
-          <div class="sb"><span>14:32</span><span>5G · 82 %</span></div>
-          <div class="ccg">
-            <div class="t on"><i></i></div><div class="t on"><i></i></div><div class="t"><i></i></div><div class="t on"><i></i></div>
-            <div class="t w2"><b>Midnight City</b><span>M83 · en lecture</span></div><div class="t h2"></div><div class="t h2 v"></div>
-            <div class="t w2"><b>Lampe torche</b><span>Éteinte</span></div>
-            <div class="t"><i></i></div><div class="t on"><i></i></div><div class="t"><i></i></div><div class="t"><i></i></div>
+        <div class="phone"><div class="scr"><div class="v-wall"></div><div class="v-cc"></div><div class="v-ui">
+          <div class="v-sb"><span>14:32</span><span class="r"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-4M12 20v-9M18 20V6"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg><i class="v-batt">82</i></span></div>
+          <div class="v-ccg">
+            <div class="v-blk" style="grid-area:1/1/3/3"><div class="v-conn">
+              <i class="v-o"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></i><i class="v-o on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg></i><i class="v-o"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8M12 14v8"/></svg></i>
+              <div class="v-mini"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-4M12 20v-9M18 20V6"/></svg></i><i class="bl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg></i><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 15V9l6 6V9"/></svg></i><i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></svg></i></div></div></div>
+            <div class="v-blk v-med" style="grid-area:1/3/3/5"><div class="v-mtop"><div class="v-cover s"></div><i class="v-o sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8M2 16a5 5 0 0 1 4 4M2 20h.01"/></svg></i></div>
+              <b>Neon Skyline</b><span>Lumen</span><div class="v-ctrl b"><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M11 19 2 12l9-7zM22 19l-9-7 9-7z"/></svg><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="m13 19 9-7-9-7zM2 19l9-7-9-7z"/></svg></div></div>
+            <div class="v-sl" style="grid-area:3/1/5/2;--f:22%"><i class="v-a">A</i><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></div>
+            <div class="v-sl" style="grid-area:3/2/5/3;--f:45%"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></div>
+            <div class="v-profile" style="grid-area:3/3/4/5"><i><svg viewBox="0 0 24 24" class="f" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></i><div><b>Maison</b><span>Actif</span></div></div>
+            <i class="v-o" style="grid-area:4/3/5/4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></i><i class="v-o on" style="grid-area:4/4/5/5"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" transform="rotate(-45 12 12)"/><path d="M3 9a9 9 0 0 1 6-6M21 15a9 9 0 0 1-6 6"/></svg></i>
+            <div class="v-blk v-torch" style="grid-area:5/1/7/3"><i class="v-o sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6c0 2-2 2-2 4v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10c0-2-2-2-2-4V2h12z"/><path d="M6 6h12M12 12v2"/></svg></i><b>Lampe torche</b><span>Éteinte</span></div>
+            <i class="v-o" style="grid-area:5/3/6/4"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3h-3"/></svg></i><i class="v-o" style="grid-area:5/4/6/5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg></i>
+            <i class="v-o v-pct" style="grid-area:6/3/7/4"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="10" height="17" rx="2"/><path d="M10 2h4"/></svg><small>82%</small></i><i class="v-o" style="grid-area:6/4/7/5"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg></i>
+            <i class="v-o v-add" style="grid-area:7/1/8/2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></i>
           </div>
-          <div class="gear"><i></i></div>
+          <div class="v-hint">Glisse vers le haut pour fermer · appui long pour organiser</div>
+          <i class="v-o v-gear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></i>
         </div></div></div>
       </div></div>
     </section>
@@ -269,7 +399,11 @@
 
 <footer>
   <div class="wrap">
-    <span>Halo · imaginé par Benjamin Lambot</span>
+    <div class="credits">
+      <span>Imaginé et conçu par <b>Benjamin Lambot</b></span>
+      <span>Réalisé avec <b>Claude</b> (Anthropic)</span>
+      <a href="https://simonlacroix.net/" target="_blank" rel="noopener">Nom de domaine fourni par Simon Lacroix</a>
+    </div>
     <a href="../telecharger.html">Découvrir aussi Cyberdeck</a>
   </div>
 </footer>
